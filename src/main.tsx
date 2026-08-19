@@ -5,6 +5,9 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { router } from './app/router';
 import { queryClient } from './app/queryClient';
 import './index.css';
+import { registerApiInterceptors } from './shared/api/client';
+
+registerApiInterceptors();
 
 const rootElement = document.getElementById('root') as HTMLElement;
 

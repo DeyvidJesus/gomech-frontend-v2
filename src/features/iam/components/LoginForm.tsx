@@ -33,8 +33,8 @@ export function LoginForm() {
     mutationFn: authApi.login,
     onSuccess: (data) => {
       setGlobalError(null);
-      setAuth(data.accessToken);
-      navigate({ to: '/' });
+      setAuth(data);
+      navigate({ to: '/dashboard' });
     },
     onError: (error: unknown) => {
       setGlobalError((error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Falha ao autenticar. Verifique suas credenciais.');

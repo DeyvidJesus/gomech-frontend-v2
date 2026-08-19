@@ -44,8 +44,8 @@ export function RegisterForm() {
     mutationFn: authApi.register,
     onSuccess: (data) => {
       setGlobalError(null);
-      setAuth(data.accessToken);
-      navigate({ to: '/' });
+      setAuth(data);
+      navigate({ to: '/dashboard' });
     },
     onError: (error: unknown) => {
       setGlobalError((error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to register. Please try again.');

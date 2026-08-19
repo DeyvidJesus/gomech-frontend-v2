@@ -17,7 +17,17 @@ export interface LoginRequest {
 export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
+  tokenType?: string;
   expiresIn: number;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    tenantId?: string;
+    activeUnitId?: string;
+    roles?: string[];
+    permissions?: string[];
+  } | null;
 }
 
 export interface RegisterWorkshopRequest {

@@ -1,0 +1,10 @@
+import { createFileRoute, redirect } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
+import { ProtectedLayout } from '@/shared/layouts/ProtectedLayout';
+import { iamApi } from '@/features/iam/api/iam';
+import { useAuthStore } from '@/features/iam/stores/authStore';
+
+export const Route = createFileRoute('/dashboard/users')({ beforeLoad: guard, component: UsersPage });
+function guard() { if (!useAuthStore.getState().isAuthenticated) throw redirect({ to: '/login' }); }
+function UsersPage() { const query = useQuery({ queryKey: ['iam', 'users'], queryFn: () => iamApi.users().then((r) => r.data) }); return <ProtectedLayout><PageHeader title="Team users" description="Review the people who can access this workshop." /><div className="overflow-hidden rounded-lg border border-border-divider bg-surface"><table className="w-full text-left"><thead className="bg-bg-app text-xs uppercase tracking-[0.1em] text-text-secondary"><tr><th className="px-5 py-4">Name</th><th className="px-5 py-4">Email</th><th className="px-5 py-4">Status</th></tr></thead><tbody className="divide-y divide-border-divider">{(query.data ?? []).map((user) => <tr key={user.id}><td className="px-5 py-4 text-sm font-medium">{user.name}</td><td className="px-5 py-4 text-sm text-text-secondary">{user.email}</td><td className="px-5 py-4"><span className="rounded-full bg-[#E8F5E9] px-2.5 py-1 text-xs font-semibold text-green-dark">{user.status}</span></td></tr>)}</tbody></table>{!query.data?.length && <p className="p-8 text-center text-sm text-text-secondary">No users returned for this workspace.</p>}</div></ProtectedLayout>; }
+function PageHeader({ title, description }: { title: string; description: string }) { return <header className="mb-8"><p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-warning-orange">IAM / Directory</p><h1 className="font-manrope text-3xl font-bold tracking-tight">{title}</h1><p className="mt-2 text-text-secondary">{description}</p></header>; }
