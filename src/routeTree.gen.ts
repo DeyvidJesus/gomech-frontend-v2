@@ -15,6 +15,31 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardUsersRouteImport } from './routes/dashboard.users'
 import { Route as DashboardUnitsRouteImport } from './routes/dashboard.units'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminRolesRouteImport } from './routes/admin.roles'
+import { Route as AdminCompanyRouteImport } from './routes/admin.company'
+import { Route as OperationsWorkOrdersIndexRouteImport } from './routes/operations.work-orders.index'
+import { Route as OperationsQuotesIndexRouteImport } from './routes/operations.quotes.index'
+import { Route as OperationsInspectionsIndexRouteImport } from './routes/operations.inspections.index'
+import { Route as CrmVehiclesIndexRouteImport } from './routes/crm.vehicles.index'
+import { Route as CrmCustomersIndexRouteImport } from './routes/crm.customers.index'
+import { Route as PortalQuotesIdRouteImport } from './routes/portal.quotes.$id'
+import { Route as OperationsWorkOrdersKanbanRouteImport } from './routes/operations.work-orders.kanban'
+import { Route as OperationsWorkOrdersIdRouteImport } from './routes/operations.work-orders.$id'
+import { Route as OperationsSchedulingNewRouteImport } from './routes/operations.scheduling.new'
+import { Route as OperationsSchedulingCheckinRouteImport } from './routes/operations.scheduling.checkin'
+import { Route as OperationsSchedulingCalendarRouteImport } from './routes/operations.scheduling.calendar'
+import { Route as OperationsQuotesNewRouteImport } from './routes/operations.quotes.new'
+import { Route as OperationsQuotesIdRouteImport } from './routes/operations.quotes.$id'
+import { Route as OperationsInspectionsNewRouteImport } from './routes/operations.inspections.new'
+import { Route as OperationsInspectionsIdRouteImport } from './routes/operations.inspections.$id'
+import { Route as CrmVehiclesNewRouteImport } from './routes/crm.vehicles.new'
+import { Route as CrmVehiclesIdRouteImport } from './routes/crm.vehicles.$id'
+import { Route as CrmCustomersNewRouteImport } from './routes/crm.customers.new'
+import { Route as CrmCustomersIdRouteImport } from './routes/crm.customers.$id'
+import { Route as AuthCallbackGoogleRouteImport } from './routes/auth.callback.google'
+import { Route as PortalVehiclesIdHistoryRouteImport } from './routes/portal.vehicles.$id.history'
+import { Route as OperationsVehiclesIdHistoryRouteImport } from './routes/operations.vehicles.$id.history'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -46,22 +71,204 @@ const DashboardUnitsRoute = DashboardUnitsRouteImport.update({
   path: '/units',
   getParentRoute: () => DashboardRoute,
 } as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRolesRoute = AdminRolesRouteImport.update({
+  id: '/admin/roles',
+  path: '/admin/roles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminCompanyRoute = AdminCompanyRouteImport.update({
+  id: '/admin/company',
+  path: '/admin/company',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperationsWorkOrdersIndexRoute =
+  OperationsWorkOrdersIndexRouteImport.update({
+    id: '/operations/work-orders/',
+    path: '/operations/work-orders/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const OperationsQuotesIndexRoute = OperationsQuotesIndexRouteImport.update({
+  id: '/operations/quotes/',
+  path: '/operations/quotes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperationsInspectionsIndexRoute =
+  OperationsInspectionsIndexRouteImport.update({
+    id: '/operations/inspections/',
+    path: '/operations/inspections/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CrmVehiclesIndexRoute = CrmVehiclesIndexRouteImport.update({
+  id: '/crm/vehicles/',
+  path: '/crm/vehicles/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CrmCustomersIndexRoute = CrmCustomersIndexRouteImport.update({
+  id: '/crm/customers/',
+  path: '/crm/customers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalQuotesIdRoute = PortalQuotesIdRouteImport.update({
+  id: '/portal/quotes/$id',
+  path: '/portal/quotes/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperationsWorkOrdersKanbanRoute =
+  OperationsWorkOrdersKanbanRouteImport.update({
+    id: '/operations/work-orders/kanban',
+    path: '/operations/work-orders/kanban',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const OperationsWorkOrdersIdRoute = OperationsWorkOrdersIdRouteImport.update({
+  id: '/operations/work-orders/$id',
+  path: '/operations/work-orders/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperationsSchedulingNewRoute = OperationsSchedulingNewRouteImport.update({
+  id: '/operations/scheduling/new',
+  path: '/operations/scheduling/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperationsSchedulingCheckinRoute =
+  OperationsSchedulingCheckinRouteImport.update({
+    id: '/operations/scheduling/checkin',
+    path: '/operations/scheduling/checkin',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const OperationsSchedulingCalendarRoute =
+  OperationsSchedulingCalendarRouteImport.update({
+    id: '/operations/scheduling/calendar',
+    path: '/operations/scheduling/calendar',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const OperationsQuotesNewRoute = OperationsQuotesNewRouteImport.update({
+  id: '/operations/quotes/new',
+  path: '/operations/quotes/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperationsQuotesIdRoute = OperationsQuotesIdRouteImport.update({
+  id: '/operations/quotes/$id',
+  path: '/operations/quotes/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperationsInspectionsNewRoute =
+  OperationsInspectionsNewRouteImport.update({
+    id: '/operations/inspections/new',
+    path: '/operations/inspections/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const OperationsInspectionsIdRoute = OperationsInspectionsIdRouteImport.update({
+  id: '/operations/inspections/$id',
+  path: '/operations/inspections/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CrmVehiclesNewRoute = CrmVehiclesNewRouteImport.update({
+  id: '/crm/vehicles/new',
+  path: '/crm/vehicles/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CrmVehiclesIdRoute = CrmVehiclesIdRouteImport.update({
+  id: '/crm/vehicles/$id',
+  path: '/crm/vehicles/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CrmCustomersNewRoute = CrmCustomersNewRouteImport.update({
+  id: '/crm/customers/new',
+  path: '/crm/customers/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CrmCustomersIdRoute = CrmCustomersIdRouteImport.update({
+  id: '/crm/customers/$id',
+  path: '/crm/customers/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackGoogleRoute = AuthCallbackGoogleRouteImport.update({
+  id: '/auth/callback/google',
+  path: '/auth/callback/google',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalVehiclesIdHistoryRoute = PortalVehiclesIdHistoryRouteImport.update({
+  id: '/portal/vehicles/$id/history',
+  path: '/portal/vehicles/$id/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperationsVehiclesIdHistoryRoute =
+  OperationsVehiclesIdHistoryRouteImport.update({
+    id: '/operations/vehicles/$id/history',
+    path: '/operations/vehicles/$id/history',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/admin/company': typeof AdminCompanyRoute
+  '/admin/roles': typeof AdminRolesRoute
+  '/admin/users': typeof AdminUsersRoute
   '/dashboard/units': typeof DashboardUnitsRoute
   '/dashboard/users': typeof DashboardUsersRoute
+  '/auth/callback/google': typeof AuthCallbackGoogleRoute
+  '/crm/customers/$id': typeof CrmCustomersIdRoute
+  '/crm/customers/new': typeof CrmCustomersNewRoute
+  '/crm/vehicles/$id': typeof CrmVehiclesIdRoute
+  '/crm/vehicles/new': typeof CrmVehiclesNewRoute
+  '/operations/inspections/$id': typeof OperationsInspectionsIdRoute
+  '/operations/inspections/new': typeof OperationsInspectionsNewRoute
+  '/operations/quotes/$id': typeof OperationsQuotesIdRoute
+  '/operations/quotes/new': typeof OperationsQuotesNewRoute
+  '/operations/scheduling/calendar': typeof OperationsSchedulingCalendarRoute
+  '/operations/scheduling/checkin': typeof OperationsSchedulingCheckinRoute
+  '/operations/scheduling/new': typeof OperationsSchedulingNewRoute
+  '/operations/work-orders/$id': typeof OperationsWorkOrdersIdRoute
+  '/operations/work-orders/kanban': typeof OperationsWorkOrdersKanbanRoute
+  '/portal/quotes/$id': typeof PortalQuotesIdRoute
+  '/crm/customers/': typeof CrmCustomersIndexRoute
+  '/crm/vehicles/': typeof CrmVehiclesIndexRoute
+  '/operations/inspections/': typeof OperationsInspectionsIndexRoute
+  '/operations/quotes/': typeof OperationsQuotesIndexRoute
+  '/operations/work-orders/': typeof OperationsWorkOrdersIndexRoute
+  '/operations/vehicles/$id/history': typeof OperationsVehiclesIdHistoryRoute
+  '/portal/vehicles/$id/history': typeof PortalVehiclesIdHistoryRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/admin/company': typeof AdminCompanyRoute
+  '/admin/roles': typeof AdminRolesRoute
+  '/admin/users': typeof AdminUsersRoute
   '/dashboard/units': typeof DashboardUnitsRoute
   '/dashboard/users': typeof DashboardUsersRoute
+  '/auth/callback/google': typeof AuthCallbackGoogleRoute
+  '/crm/customers/$id': typeof CrmCustomersIdRoute
+  '/crm/customers/new': typeof CrmCustomersNewRoute
+  '/crm/vehicles/$id': typeof CrmVehiclesIdRoute
+  '/crm/vehicles/new': typeof CrmVehiclesNewRoute
+  '/operations/inspections/$id': typeof OperationsInspectionsIdRoute
+  '/operations/inspections/new': typeof OperationsInspectionsNewRoute
+  '/operations/quotes/$id': typeof OperationsQuotesIdRoute
+  '/operations/quotes/new': typeof OperationsQuotesNewRoute
+  '/operations/scheduling/calendar': typeof OperationsSchedulingCalendarRoute
+  '/operations/scheduling/checkin': typeof OperationsSchedulingCheckinRoute
+  '/operations/scheduling/new': typeof OperationsSchedulingNewRoute
+  '/operations/work-orders/$id': typeof OperationsWorkOrdersIdRoute
+  '/operations/work-orders/kanban': typeof OperationsWorkOrdersKanbanRoute
+  '/portal/quotes/$id': typeof PortalQuotesIdRoute
+  '/crm/customers': typeof CrmCustomersIndexRoute
+  '/crm/vehicles': typeof CrmVehiclesIndexRoute
+  '/operations/inspections': typeof OperationsInspectionsIndexRoute
+  '/operations/quotes': typeof OperationsQuotesIndexRoute
+  '/operations/work-orders': typeof OperationsWorkOrdersIndexRoute
+  '/operations/vehicles/$id/history': typeof OperationsVehiclesIdHistoryRoute
+  '/portal/vehicles/$id/history': typeof PortalVehiclesIdHistoryRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -69,8 +276,33 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/admin/company': typeof AdminCompanyRoute
+  '/admin/roles': typeof AdminRolesRoute
+  '/admin/users': typeof AdminUsersRoute
   '/dashboard/units': typeof DashboardUnitsRoute
   '/dashboard/users': typeof DashboardUsersRoute
+  '/auth/callback/google': typeof AuthCallbackGoogleRoute
+  '/crm/customers/$id': typeof CrmCustomersIdRoute
+  '/crm/customers/new': typeof CrmCustomersNewRoute
+  '/crm/vehicles/$id': typeof CrmVehiclesIdRoute
+  '/crm/vehicles/new': typeof CrmVehiclesNewRoute
+  '/operations/inspections/$id': typeof OperationsInspectionsIdRoute
+  '/operations/inspections/new': typeof OperationsInspectionsNewRoute
+  '/operations/quotes/$id': typeof OperationsQuotesIdRoute
+  '/operations/quotes/new': typeof OperationsQuotesNewRoute
+  '/operations/scheduling/calendar': typeof OperationsSchedulingCalendarRoute
+  '/operations/scheduling/checkin': typeof OperationsSchedulingCheckinRoute
+  '/operations/scheduling/new': typeof OperationsSchedulingNewRoute
+  '/operations/work-orders/$id': typeof OperationsWorkOrdersIdRoute
+  '/operations/work-orders/kanban': typeof OperationsWorkOrdersKanbanRoute
+  '/portal/quotes/$id': typeof PortalQuotesIdRoute
+  '/crm/customers/': typeof CrmCustomersIndexRoute
+  '/crm/vehicles/': typeof CrmVehiclesIndexRoute
+  '/operations/inspections/': typeof OperationsInspectionsIndexRoute
+  '/operations/quotes/': typeof OperationsQuotesIndexRoute
+  '/operations/work-orders/': typeof OperationsWorkOrdersIndexRoute
+  '/operations/vehicles/$id/history': typeof OperationsVehiclesIdHistoryRoute
+  '/portal/vehicles/$id/history': typeof PortalVehiclesIdHistoryRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -79,24 +311,99 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login'
     | '/register'
+    | '/admin/company'
+    | '/admin/roles'
+    | '/admin/users'
     | '/dashboard/units'
     | '/dashboard/users'
+    | '/auth/callback/google'
+    | '/crm/customers/$id'
+    | '/crm/customers/new'
+    | '/crm/vehicles/$id'
+    | '/crm/vehicles/new'
+    | '/operations/inspections/$id'
+    | '/operations/inspections/new'
+    | '/operations/quotes/$id'
+    | '/operations/quotes/new'
+    | '/operations/scheduling/calendar'
+    | '/operations/scheduling/checkin'
+    | '/operations/scheduling/new'
+    | '/operations/work-orders/$id'
+    | '/operations/work-orders/kanban'
+    | '/portal/quotes/$id'
+    | '/crm/customers/'
+    | '/crm/vehicles/'
+    | '/operations/inspections/'
+    | '/operations/quotes/'
+    | '/operations/work-orders/'
+    | '/operations/vehicles/$id/history'
+    | '/portal/vehicles/$id/history'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/dashboard'
     | '/login'
     | '/register'
+    | '/admin/company'
+    | '/admin/roles'
+    | '/admin/users'
     | '/dashboard/units'
     | '/dashboard/users'
+    | '/auth/callback/google'
+    | '/crm/customers/$id'
+    | '/crm/customers/new'
+    | '/crm/vehicles/$id'
+    | '/crm/vehicles/new'
+    | '/operations/inspections/$id'
+    | '/operations/inspections/new'
+    | '/operations/quotes/$id'
+    | '/operations/quotes/new'
+    | '/operations/scheduling/calendar'
+    | '/operations/scheduling/checkin'
+    | '/operations/scheduling/new'
+    | '/operations/work-orders/$id'
+    | '/operations/work-orders/kanban'
+    | '/portal/quotes/$id'
+    | '/crm/customers'
+    | '/crm/vehicles'
+    | '/operations/inspections'
+    | '/operations/quotes'
+    | '/operations/work-orders'
+    | '/operations/vehicles/$id/history'
+    | '/portal/vehicles/$id/history'
   id:
     | '__root__'
     | '/'
     | '/dashboard'
     | '/login'
     | '/register'
+    | '/admin/company'
+    | '/admin/roles'
+    | '/admin/users'
     | '/dashboard/units'
     | '/dashboard/users'
+    | '/auth/callback/google'
+    | '/crm/customers/$id'
+    | '/crm/customers/new'
+    | '/crm/vehicles/$id'
+    | '/crm/vehicles/new'
+    | '/operations/inspections/$id'
+    | '/operations/inspections/new'
+    | '/operations/quotes/$id'
+    | '/operations/quotes/new'
+    | '/operations/scheduling/calendar'
+    | '/operations/scheduling/checkin'
+    | '/operations/scheduling/new'
+    | '/operations/work-orders/$id'
+    | '/operations/work-orders/kanban'
+    | '/portal/quotes/$id'
+    | '/crm/customers/'
+    | '/crm/vehicles/'
+    | '/operations/inspections/'
+    | '/operations/quotes/'
+    | '/operations/work-orders/'
+    | '/operations/vehicles/$id/history'
+    | '/portal/vehicles/$id/history'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -104,6 +411,31 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  AdminCompanyRoute: typeof AdminCompanyRoute
+  AdminRolesRoute: typeof AdminRolesRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AuthCallbackGoogleRoute: typeof AuthCallbackGoogleRoute
+  CrmCustomersIdRoute: typeof CrmCustomersIdRoute
+  CrmCustomersNewRoute: typeof CrmCustomersNewRoute
+  CrmVehiclesIdRoute: typeof CrmVehiclesIdRoute
+  CrmVehiclesNewRoute: typeof CrmVehiclesNewRoute
+  OperationsInspectionsIdRoute: typeof OperationsInspectionsIdRoute
+  OperationsInspectionsNewRoute: typeof OperationsInspectionsNewRoute
+  OperationsQuotesIdRoute: typeof OperationsQuotesIdRoute
+  OperationsQuotesNewRoute: typeof OperationsQuotesNewRoute
+  OperationsSchedulingCalendarRoute: typeof OperationsSchedulingCalendarRoute
+  OperationsSchedulingCheckinRoute: typeof OperationsSchedulingCheckinRoute
+  OperationsSchedulingNewRoute: typeof OperationsSchedulingNewRoute
+  OperationsWorkOrdersIdRoute: typeof OperationsWorkOrdersIdRoute
+  OperationsWorkOrdersKanbanRoute: typeof OperationsWorkOrdersKanbanRoute
+  PortalQuotesIdRoute: typeof PortalQuotesIdRoute
+  CrmCustomersIndexRoute: typeof CrmCustomersIndexRoute
+  CrmVehiclesIndexRoute: typeof CrmVehiclesIndexRoute
+  OperationsInspectionsIndexRoute: typeof OperationsInspectionsIndexRoute
+  OperationsQuotesIndexRoute: typeof OperationsQuotesIndexRoute
+  OperationsWorkOrdersIndexRoute: typeof OperationsWorkOrdersIndexRoute
+  OperationsVehiclesIdHistoryRoute: typeof OperationsVehiclesIdHistoryRoute
+  PortalVehiclesIdHistoryRoute: typeof PortalVehiclesIdHistoryRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -150,6 +482,181 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardUnitsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/roles': {
+      id: '/admin/roles'
+      path: '/admin/roles'
+      fullPath: '/admin/roles'
+      preLoaderRoute: typeof AdminRolesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/company': {
+      id: '/admin/company'
+      path: '/admin/company'
+      fullPath: '/admin/company'
+      preLoaderRoute: typeof AdminCompanyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operations/work-orders/': {
+      id: '/operations/work-orders/'
+      path: '/operations/work-orders'
+      fullPath: '/operations/work-orders/'
+      preLoaderRoute: typeof OperationsWorkOrdersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operations/quotes/': {
+      id: '/operations/quotes/'
+      path: '/operations/quotes'
+      fullPath: '/operations/quotes/'
+      preLoaderRoute: typeof OperationsQuotesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operations/inspections/': {
+      id: '/operations/inspections/'
+      path: '/operations/inspections'
+      fullPath: '/operations/inspections/'
+      preLoaderRoute: typeof OperationsInspectionsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/crm/vehicles/': {
+      id: '/crm/vehicles/'
+      path: '/crm/vehicles'
+      fullPath: '/crm/vehicles/'
+      preLoaderRoute: typeof CrmVehiclesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/crm/customers/': {
+      id: '/crm/customers/'
+      path: '/crm/customers'
+      fullPath: '/crm/customers/'
+      preLoaderRoute: typeof CrmCustomersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portal/quotes/$id': {
+      id: '/portal/quotes/$id'
+      path: '/portal/quotes/$id'
+      fullPath: '/portal/quotes/$id'
+      preLoaderRoute: typeof PortalQuotesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operations/work-orders/kanban': {
+      id: '/operations/work-orders/kanban'
+      path: '/operations/work-orders/kanban'
+      fullPath: '/operations/work-orders/kanban'
+      preLoaderRoute: typeof OperationsWorkOrdersKanbanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operations/work-orders/$id': {
+      id: '/operations/work-orders/$id'
+      path: '/operations/work-orders/$id'
+      fullPath: '/operations/work-orders/$id'
+      preLoaderRoute: typeof OperationsWorkOrdersIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operations/scheduling/new': {
+      id: '/operations/scheduling/new'
+      path: '/operations/scheduling/new'
+      fullPath: '/operations/scheduling/new'
+      preLoaderRoute: typeof OperationsSchedulingNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operations/scheduling/checkin': {
+      id: '/operations/scheduling/checkin'
+      path: '/operations/scheduling/checkin'
+      fullPath: '/operations/scheduling/checkin'
+      preLoaderRoute: typeof OperationsSchedulingCheckinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operations/scheduling/calendar': {
+      id: '/operations/scheduling/calendar'
+      path: '/operations/scheduling/calendar'
+      fullPath: '/operations/scheduling/calendar'
+      preLoaderRoute: typeof OperationsSchedulingCalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operations/quotes/new': {
+      id: '/operations/quotes/new'
+      path: '/operations/quotes/new'
+      fullPath: '/operations/quotes/new'
+      preLoaderRoute: typeof OperationsQuotesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operations/quotes/$id': {
+      id: '/operations/quotes/$id'
+      path: '/operations/quotes/$id'
+      fullPath: '/operations/quotes/$id'
+      preLoaderRoute: typeof OperationsQuotesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operations/inspections/new': {
+      id: '/operations/inspections/new'
+      path: '/operations/inspections/new'
+      fullPath: '/operations/inspections/new'
+      preLoaderRoute: typeof OperationsInspectionsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operations/inspections/$id': {
+      id: '/operations/inspections/$id'
+      path: '/operations/inspections/$id'
+      fullPath: '/operations/inspections/$id'
+      preLoaderRoute: typeof OperationsInspectionsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/crm/vehicles/new': {
+      id: '/crm/vehicles/new'
+      path: '/crm/vehicles/new'
+      fullPath: '/crm/vehicles/new'
+      preLoaderRoute: typeof CrmVehiclesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/crm/vehicles/$id': {
+      id: '/crm/vehicles/$id'
+      path: '/crm/vehicles/$id'
+      fullPath: '/crm/vehicles/$id'
+      preLoaderRoute: typeof CrmVehiclesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/crm/customers/new': {
+      id: '/crm/customers/new'
+      path: '/crm/customers/new'
+      fullPath: '/crm/customers/new'
+      preLoaderRoute: typeof CrmCustomersNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/crm/customers/$id': {
+      id: '/crm/customers/$id'
+      path: '/crm/customers/$id'
+      fullPath: '/crm/customers/$id'
+      preLoaderRoute: typeof CrmCustomersIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback/google': {
+      id: '/auth/callback/google'
+      path: '/auth/callback/google'
+      fullPath: '/auth/callback/google'
+      preLoaderRoute: typeof AuthCallbackGoogleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portal/vehicles/$id/history': {
+      id: '/portal/vehicles/$id/history'
+      path: '/portal/vehicles/$id/history'
+      fullPath: '/portal/vehicles/$id/history'
+      preLoaderRoute: typeof PortalVehiclesIdHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operations/vehicles/$id/history': {
+      id: '/operations/vehicles/$id/history'
+      path: '/operations/vehicles/$id/history'
+      fullPath: '/operations/vehicles/$id/history'
+      preLoaderRoute: typeof OperationsVehiclesIdHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -172,6 +679,31 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  AdminCompanyRoute: AdminCompanyRoute,
+  AdminRolesRoute: AdminRolesRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AuthCallbackGoogleRoute: AuthCallbackGoogleRoute,
+  CrmCustomersIdRoute: CrmCustomersIdRoute,
+  CrmCustomersNewRoute: CrmCustomersNewRoute,
+  CrmVehiclesIdRoute: CrmVehiclesIdRoute,
+  CrmVehiclesNewRoute: CrmVehiclesNewRoute,
+  OperationsInspectionsIdRoute: OperationsInspectionsIdRoute,
+  OperationsInspectionsNewRoute: OperationsInspectionsNewRoute,
+  OperationsQuotesIdRoute: OperationsQuotesIdRoute,
+  OperationsQuotesNewRoute: OperationsQuotesNewRoute,
+  OperationsSchedulingCalendarRoute: OperationsSchedulingCalendarRoute,
+  OperationsSchedulingCheckinRoute: OperationsSchedulingCheckinRoute,
+  OperationsSchedulingNewRoute: OperationsSchedulingNewRoute,
+  OperationsWorkOrdersIdRoute: OperationsWorkOrdersIdRoute,
+  OperationsWorkOrdersKanbanRoute: OperationsWorkOrdersKanbanRoute,
+  PortalQuotesIdRoute: PortalQuotesIdRoute,
+  CrmCustomersIndexRoute: CrmCustomersIndexRoute,
+  CrmVehiclesIndexRoute: CrmVehiclesIndexRoute,
+  OperationsInspectionsIndexRoute: OperationsInspectionsIndexRoute,
+  OperationsQuotesIndexRoute: OperationsQuotesIndexRoute,
+  OperationsWorkOrdersIndexRoute: OperationsWorkOrdersIndexRoute,
+  OperationsVehiclesIdHistoryRoute: OperationsVehiclesIdHistoryRoute,
+  PortalVehiclesIdHistoryRoute: PortalVehiclesIdHistoryRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
