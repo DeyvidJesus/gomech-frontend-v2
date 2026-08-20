@@ -13,11 +13,16 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ToolsIndexRouteImport } from './routes/tools.index'
+import { Route as ToolsNewRouteImport } from './routes/tools.new'
 import { Route as DashboardUsersRouteImport } from './routes/dashboard.users'
 import { Route as DashboardUnitsRouteImport } from './routes/dashboard.units'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminRolesRouteImport } from './routes/admin.roles'
 import { Route as AdminCompanyRouteImport } from './routes/admin.company'
+import { Route as ToolsTransfersIndexRouteImport } from './routes/tools.transfers.index'
+import { Route as ToolsMaintenancesIndexRouteImport } from './routes/tools.maintenances.index'
+import { Route as ToolsIdIndexRouteImport } from './routes/tools.$id.index'
 import { Route as OperationsWorkOrdersIndexRouteImport } from './routes/operations.work-orders.index'
 import { Route as OperationsQuotesIndexRouteImport } from './routes/operations.quotes.index'
 import { Route as OperationsInspectionsIndexRouteImport } from './routes/operations.inspections.index'
@@ -27,6 +32,7 @@ import { Route as InventoryProductsIndexRouteImport } from './routes/inventory.p
 import { Route as InventoryMovementsIndexRouteImport } from './routes/inventory.movements.index'
 import { Route as CrmVehiclesIndexRouteImport } from './routes/crm.vehicles.index'
 import { Route as CrmCustomersIndexRouteImport } from './routes/crm.customers.index'
+import { Route as ToolsIdEditRouteImport } from './routes/tools.$id.edit'
 import { Route as PortalQuotesIdRouteImport } from './routes/portal.quotes.$id'
 import { Route as OperationsWorkOrdersKanbanRouteImport } from './routes/operations.work-orders.kanban'
 import { Route as OperationsWorkOrdersIdRouteImport } from './routes/operations.work-orders.$id'
@@ -67,6 +73,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ToolsIndexRoute = ToolsIndexRouteImport.update({
+  id: '/tools/',
+  path: '/tools/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsNewRoute = ToolsNewRouteImport.update({
+  id: '/tools/new',
+  path: '/tools/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardUsersRoute = DashboardUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -90,6 +106,21 @@ const AdminRolesRoute = AdminRolesRouteImport.update({
 const AdminCompanyRoute = AdminCompanyRouteImport.update({
   id: '/admin/company',
   path: '/admin/company',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsTransfersIndexRoute = ToolsTransfersIndexRouteImport.update({
+  id: '/tools/transfers/',
+  path: '/tools/transfers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsMaintenancesIndexRoute = ToolsMaintenancesIndexRouteImport.update({
+  id: '/tools/maintenances/',
+  path: '/tools/maintenances/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsIdIndexRoute = ToolsIdIndexRouteImport.update({
+  id: '/tools/$id/',
+  path: '/tools/$id/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OperationsWorkOrdersIndexRoute =
@@ -137,6 +168,11 @@ const CrmVehiclesIndexRoute = CrmVehiclesIndexRouteImport.update({
 const CrmCustomersIndexRoute = CrmCustomersIndexRouteImport.update({
   id: '/crm/customers/',
   path: '/crm/customers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsIdEditRoute = ToolsIdEditRouteImport.update({
+  id: '/tools/$id/edit',
+  path: '/tools/$id/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PortalQuotesIdRoute = PortalQuotesIdRouteImport.update({
@@ -250,6 +286,8 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/dashboard/units': typeof DashboardUnitsRoute
   '/dashboard/users': typeof DashboardUsersRoute
+  '/tools/new': typeof ToolsNewRoute
+  '/tools/': typeof ToolsIndexRoute
   '/auth/callback/google': typeof AuthCallbackGoogleRoute
   '/crm/customers/$id': typeof CrmCustomersIdRoute
   '/crm/customers/new': typeof CrmCustomersNewRoute
@@ -267,6 +305,7 @@ export interface FileRoutesByFullPath {
   '/operations/work-orders/$id': typeof OperationsWorkOrdersIdRoute
   '/operations/work-orders/kanban': typeof OperationsWorkOrdersKanbanRoute
   '/portal/quotes/$id': typeof PortalQuotesIdRoute
+  '/tools/$id/edit': typeof ToolsIdEditRoute
   '/crm/customers/': typeof CrmCustomersIndexRoute
   '/crm/vehicles/': typeof CrmVehiclesIndexRoute
   '/inventory/movements/': typeof InventoryMovementsIndexRoute
@@ -276,6 +315,9 @@ export interface FileRoutesByFullPath {
   '/operations/inspections/': typeof OperationsInspectionsIndexRoute
   '/operations/quotes/': typeof OperationsQuotesIndexRoute
   '/operations/work-orders/': typeof OperationsWorkOrdersIndexRoute
+  '/tools/$id/': typeof ToolsIdIndexRoute
+  '/tools/maintenances/': typeof ToolsMaintenancesIndexRoute
+  '/tools/transfers/': typeof ToolsTransfersIndexRoute
   '/operations/vehicles/$id/history': typeof OperationsVehiclesIdHistoryRoute
   '/portal/vehicles/$id/history': typeof PortalVehiclesIdHistoryRoute
 }
@@ -289,6 +331,8 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/dashboard/units': typeof DashboardUnitsRoute
   '/dashboard/users': typeof DashboardUsersRoute
+  '/tools/new': typeof ToolsNewRoute
+  '/tools': typeof ToolsIndexRoute
   '/auth/callback/google': typeof AuthCallbackGoogleRoute
   '/crm/customers/$id': typeof CrmCustomersIdRoute
   '/crm/customers/new': typeof CrmCustomersNewRoute
@@ -306,6 +350,7 @@ export interface FileRoutesByTo {
   '/operations/work-orders/$id': typeof OperationsWorkOrdersIdRoute
   '/operations/work-orders/kanban': typeof OperationsWorkOrdersKanbanRoute
   '/portal/quotes/$id': typeof PortalQuotesIdRoute
+  '/tools/$id/edit': typeof ToolsIdEditRoute
   '/crm/customers': typeof CrmCustomersIndexRoute
   '/crm/vehicles': typeof CrmVehiclesIndexRoute
   '/inventory/movements': typeof InventoryMovementsIndexRoute
@@ -315,6 +360,9 @@ export interface FileRoutesByTo {
   '/operations/inspections': typeof OperationsInspectionsIndexRoute
   '/operations/quotes': typeof OperationsQuotesIndexRoute
   '/operations/work-orders': typeof OperationsWorkOrdersIndexRoute
+  '/tools/$id': typeof ToolsIdIndexRoute
+  '/tools/maintenances': typeof ToolsMaintenancesIndexRoute
+  '/tools/transfers': typeof ToolsTransfersIndexRoute
   '/operations/vehicles/$id/history': typeof OperationsVehiclesIdHistoryRoute
   '/portal/vehicles/$id/history': typeof PortalVehiclesIdHistoryRoute
 }
@@ -329,6 +377,8 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/dashboard/units': typeof DashboardUnitsRoute
   '/dashboard/users': typeof DashboardUsersRoute
+  '/tools/new': typeof ToolsNewRoute
+  '/tools/': typeof ToolsIndexRoute
   '/auth/callback/google': typeof AuthCallbackGoogleRoute
   '/crm/customers/$id': typeof CrmCustomersIdRoute
   '/crm/customers/new': typeof CrmCustomersNewRoute
@@ -346,6 +396,7 @@ export interface FileRoutesById {
   '/operations/work-orders/$id': typeof OperationsWorkOrdersIdRoute
   '/operations/work-orders/kanban': typeof OperationsWorkOrdersKanbanRoute
   '/portal/quotes/$id': typeof PortalQuotesIdRoute
+  '/tools/$id/edit': typeof ToolsIdEditRoute
   '/crm/customers/': typeof CrmCustomersIndexRoute
   '/crm/vehicles/': typeof CrmVehiclesIndexRoute
   '/inventory/movements/': typeof InventoryMovementsIndexRoute
@@ -355,6 +406,9 @@ export interface FileRoutesById {
   '/operations/inspections/': typeof OperationsInspectionsIndexRoute
   '/operations/quotes/': typeof OperationsQuotesIndexRoute
   '/operations/work-orders/': typeof OperationsWorkOrdersIndexRoute
+  '/tools/$id/': typeof ToolsIdIndexRoute
+  '/tools/maintenances/': typeof ToolsMaintenancesIndexRoute
+  '/tools/transfers/': typeof ToolsTransfersIndexRoute
   '/operations/vehicles/$id/history': typeof OperationsVehiclesIdHistoryRoute
   '/portal/vehicles/$id/history': typeof PortalVehiclesIdHistoryRoute
 }
@@ -370,6 +424,8 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/dashboard/units'
     | '/dashboard/users'
+    | '/tools/new'
+    | '/tools/'
     | '/auth/callback/google'
     | '/crm/customers/$id'
     | '/crm/customers/new'
@@ -387,6 +443,7 @@ export interface FileRouteTypes {
     | '/operations/work-orders/$id'
     | '/operations/work-orders/kanban'
     | '/portal/quotes/$id'
+    | '/tools/$id/edit'
     | '/crm/customers/'
     | '/crm/vehicles/'
     | '/inventory/movements/'
@@ -396,6 +453,9 @@ export interface FileRouteTypes {
     | '/operations/inspections/'
     | '/operations/quotes/'
     | '/operations/work-orders/'
+    | '/tools/$id/'
+    | '/tools/maintenances/'
+    | '/tools/transfers/'
     | '/operations/vehicles/$id/history'
     | '/portal/vehicles/$id/history'
   fileRoutesByTo: FileRoutesByTo
@@ -409,6 +469,8 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/dashboard/units'
     | '/dashboard/users'
+    | '/tools/new'
+    | '/tools'
     | '/auth/callback/google'
     | '/crm/customers/$id'
     | '/crm/customers/new'
@@ -426,6 +488,7 @@ export interface FileRouteTypes {
     | '/operations/work-orders/$id'
     | '/operations/work-orders/kanban'
     | '/portal/quotes/$id'
+    | '/tools/$id/edit'
     | '/crm/customers'
     | '/crm/vehicles'
     | '/inventory/movements'
@@ -435,6 +498,9 @@ export interface FileRouteTypes {
     | '/operations/inspections'
     | '/operations/quotes'
     | '/operations/work-orders'
+    | '/tools/$id'
+    | '/tools/maintenances'
+    | '/tools/transfers'
     | '/operations/vehicles/$id/history'
     | '/portal/vehicles/$id/history'
   id:
@@ -448,6 +514,8 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/dashboard/units'
     | '/dashboard/users'
+    | '/tools/new'
+    | '/tools/'
     | '/auth/callback/google'
     | '/crm/customers/$id'
     | '/crm/customers/new'
@@ -465,6 +533,7 @@ export interface FileRouteTypes {
     | '/operations/work-orders/$id'
     | '/operations/work-orders/kanban'
     | '/portal/quotes/$id'
+    | '/tools/$id/edit'
     | '/crm/customers/'
     | '/crm/vehicles/'
     | '/inventory/movements/'
@@ -474,6 +543,9 @@ export interface FileRouteTypes {
     | '/operations/inspections/'
     | '/operations/quotes/'
     | '/operations/work-orders/'
+    | '/tools/$id/'
+    | '/tools/maintenances/'
+    | '/tools/transfers/'
     | '/operations/vehicles/$id/history'
     | '/portal/vehicles/$id/history'
   fileRoutesById: FileRoutesById
@@ -486,6 +558,8 @@ export interface RootRouteChildren {
   AdminCompanyRoute: typeof AdminCompanyRoute
   AdminRolesRoute: typeof AdminRolesRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  ToolsNewRoute: typeof ToolsNewRoute
+  ToolsIndexRoute: typeof ToolsIndexRoute
   AuthCallbackGoogleRoute: typeof AuthCallbackGoogleRoute
   CrmCustomersIdRoute: typeof CrmCustomersIdRoute
   CrmCustomersNewRoute: typeof CrmCustomersNewRoute
@@ -503,6 +577,7 @@ export interface RootRouteChildren {
   OperationsWorkOrdersIdRoute: typeof OperationsWorkOrdersIdRoute
   OperationsWorkOrdersKanbanRoute: typeof OperationsWorkOrdersKanbanRoute
   PortalQuotesIdRoute: typeof PortalQuotesIdRoute
+  ToolsIdEditRoute: typeof ToolsIdEditRoute
   CrmCustomersIndexRoute: typeof CrmCustomersIndexRoute
   CrmVehiclesIndexRoute: typeof CrmVehiclesIndexRoute
   InventoryMovementsIndexRoute: typeof InventoryMovementsIndexRoute
@@ -512,6 +587,9 @@ export interface RootRouteChildren {
   OperationsInspectionsIndexRoute: typeof OperationsInspectionsIndexRoute
   OperationsQuotesIndexRoute: typeof OperationsQuotesIndexRoute
   OperationsWorkOrdersIndexRoute: typeof OperationsWorkOrdersIndexRoute
+  ToolsIdIndexRoute: typeof ToolsIdIndexRoute
+  ToolsMaintenancesIndexRoute: typeof ToolsMaintenancesIndexRoute
+  ToolsTransfersIndexRoute: typeof ToolsTransfersIndexRoute
   OperationsVehiclesIdHistoryRoute: typeof OperationsVehiclesIdHistoryRoute
   PortalVehiclesIdHistoryRoute: typeof PortalVehiclesIdHistoryRoute
 }
@@ -544,6 +622,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/': {
+      id: '/tools/'
+      path: '/tools'
+      fullPath: '/tools/'
+      preLoaderRoute: typeof ToolsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/new': {
+      id: '/tools/new'
+      path: '/tools/new'
+      fullPath: '/tools/new'
+      preLoaderRoute: typeof ToolsNewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/users': {
@@ -579,6 +671,27 @@ declare module '@tanstack/react-router' {
       path: '/admin/company'
       fullPath: '/admin/company'
       preLoaderRoute: typeof AdminCompanyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/transfers/': {
+      id: '/tools/transfers/'
+      path: '/tools/transfers'
+      fullPath: '/tools/transfers/'
+      preLoaderRoute: typeof ToolsTransfersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/maintenances/': {
+      id: '/tools/maintenances/'
+      path: '/tools/maintenances'
+      fullPath: '/tools/maintenances/'
+      preLoaderRoute: typeof ToolsMaintenancesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/$id/': {
+      id: '/tools/$id/'
+      path: '/tools/$id'
+      fullPath: '/tools/$id/'
+      preLoaderRoute: typeof ToolsIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/operations/work-orders/': {
@@ -642,6 +755,13 @@ declare module '@tanstack/react-router' {
       path: '/crm/customers'
       fullPath: '/crm/customers/'
       preLoaderRoute: typeof CrmCustomersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/$id/edit': {
+      id: '/tools/$id/edit'
+      path: '/tools/$id/edit'
+      fullPath: '/tools/$id/edit'
+      preLoaderRoute: typeof ToolsIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/portal/quotes/$id': {
@@ -802,6 +922,8 @@ const rootRouteChildren: RootRouteChildren = {
   AdminCompanyRoute: AdminCompanyRoute,
   AdminRolesRoute: AdminRolesRoute,
   AdminUsersRoute: AdminUsersRoute,
+  ToolsNewRoute: ToolsNewRoute,
+  ToolsIndexRoute: ToolsIndexRoute,
   AuthCallbackGoogleRoute: AuthCallbackGoogleRoute,
   CrmCustomersIdRoute: CrmCustomersIdRoute,
   CrmCustomersNewRoute: CrmCustomersNewRoute,
@@ -819,6 +941,7 @@ const rootRouteChildren: RootRouteChildren = {
   OperationsWorkOrdersIdRoute: OperationsWorkOrdersIdRoute,
   OperationsWorkOrdersKanbanRoute: OperationsWorkOrdersKanbanRoute,
   PortalQuotesIdRoute: PortalQuotesIdRoute,
+  ToolsIdEditRoute: ToolsIdEditRoute,
   CrmCustomersIndexRoute: CrmCustomersIndexRoute,
   CrmVehiclesIndexRoute: CrmVehiclesIndexRoute,
   InventoryMovementsIndexRoute: InventoryMovementsIndexRoute,
@@ -828,6 +951,9 @@ const rootRouteChildren: RootRouteChildren = {
   OperationsInspectionsIndexRoute: OperationsInspectionsIndexRoute,
   OperationsQuotesIndexRoute: OperationsQuotesIndexRoute,
   OperationsWorkOrdersIndexRoute: OperationsWorkOrdersIndexRoute,
+  ToolsIdIndexRoute: ToolsIdIndexRoute,
+  ToolsMaintenancesIndexRoute: ToolsMaintenancesIndexRoute,
+  ToolsTransfersIndexRoute: ToolsTransfersIndexRoute,
   OperationsVehiclesIdHistoryRoute: OperationsVehiclesIdHistoryRoute,
   PortalVehiclesIdHistoryRoute: PortalVehiclesIdHistoryRoute,
 }
