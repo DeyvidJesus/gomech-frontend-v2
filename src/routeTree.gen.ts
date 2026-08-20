@@ -15,6 +15,9 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ToolsIndexRouteImport } from './routes/tools.index'
 import { Route as ToolsNewRouteImport } from './routes/tools.new'
+import { Route as FinanceDreRouteImport } from './routes/finance.dre'
+import { Route as FinanceDashboardRouteImport } from './routes/finance.dashboard'
+import { Route as FinanceCashFlowRouteImport } from './routes/finance.cash-flow'
 import { Route as DashboardUsersRouteImport } from './routes/dashboard.users'
 import { Route as DashboardUnitsRouteImport } from './routes/dashboard.units'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
@@ -30,6 +33,10 @@ import { Route as InventoryTransfersIndexRouteImport } from './routes/inventory.
 import { Route as InventoryStocksIndexRouteImport } from './routes/inventory.stocks.index'
 import { Route as InventoryProductsIndexRouteImport } from './routes/inventory.products.index'
 import { Route as InventoryMovementsIndexRouteImport } from './routes/inventory.movements.index'
+import { Route as FinanceTransactionsIndexRouteImport } from './routes/finance.transactions.index'
+import { Route as FinanceReceivablesIndexRouteImport } from './routes/finance.receivables.index'
+import { Route as FinancePayablesIndexRouteImport } from './routes/finance.payables.index'
+import { Route as FinanceAccountsIndexRouteImport } from './routes/finance.accounts.index'
 import { Route as CrmVehiclesIndexRouteImport } from './routes/crm.vehicles.index'
 import { Route as CrmCustomersIndexRouteImport } from './routes/crm.customers.index'
 import { Route as ToolsIdEditRouteImport } from './routes/tools.$id.edit'
@@ -81,6 +88,21 @@ const ToolsIndexRoute = ToolsIndexRouteImport.update({
 const ToolsNewRoute = ToolsNewRouteImport.update({
   id: '/tools/new',
   path: '/tools/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanceDreRoute = FinanceDreRouteImport.update({
+  id: '/finance/dre',
+  path: '/finance/dre',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanceDashboardRoute = FinanceDashboardRouteImport.update({
+  id: '/finance/dashboard',
+  path: '/finance/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanceCashFlowRoute = FinanceCashFlowRouteImport.update({
+  id: '/finance/cash-flow',
+  path: '/finance/cash-flow',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardUsersRoute = DashboardUsersRouteImport.update({
@@ -158,6 +180,27 @@ const InventoryProductsIndexRoute = InventoryProductsIndexRouteImport.update({
 const InventoryMovementsIndexRoute = InventoryMovementsIndexRouteImport.update({
   id: '/inventory/movements/',
   path: '/inventory/movements/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanceTransactionsIndexRoute =
+  FinanceTransactionsIndexRouteImport.update({
+    id: '/finance/transactions/',
+    path: '/finance/transactions/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const FinanceReceivablesIndexRoute = FinanceReceivablesIndexRouteImport.update({
+  id: '/finance/receivables/',
+  path: '/finance/receivables/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinancePayablesIndexRoute = FinancePayablesIndexRouteImport.update({
+  id: '/finance/payables/',
+  path: '/finance/payables/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanceAccountsIndexRoute = FinanceAccountsIndexRouteImport.update({
+  id: '/finance/accounts/',
+  path: '/finance/accounts/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CrmVehiclesIndexRoute = CrmVehiclesIndexRouteImport.update({
@@ -286,6 +329,9 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/dashboard/units': typeof DashboardUnitsRoute
   '/dashboard/users': typeof DashboardUsersRoute
+  '/finance/cash-flow': typeof FinanceCashFlowRoute
+  '/finance/dashboard': typeof FinanceDashboardRoute
+  '/finance/dre': typeof FinanceDreRoute
   '/tools/new': typeof ToolsNewRoute
   '/tools/': typeof ToolsIndexRoute
   '/auth/callback/google': typeof AuthCallbackGoogleRoute
@@ -308,6 +354,10 @@ export interface FileRoutesByFullPath {
   '/tools/$id/edit': typeof ToolsIdEditRoute
   '/crm/customers/': typeof CrmCustomersIndexRoute
   '/crm/vehicles/': typeof CrmVehiclesIndexRoute
+  '/finance/accounts/': typeof FinanceAccountsIndexRoute
+  '/finance/payables/': typeof FinancePayablesIndexRoute
+  '/finance/receivables/': typeof FinanceReceivablesIndexRoute
+  '/finance/transactions/': typeof FinanceTransactionsIndexRoute
   '/inventory/movements/': typeof InventoryMovementsIndexRoute
   '/inventory/products/': typeof InventoryProductsIndexRoute
   '/inventory/stocks/': typeof InventoryStocksIndexRoute
@@ -331,6 +381,9 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/dashboard/units': typeof DashboardUnitsRoute
   '/dashboard/users': typeof DashboardUsersRoute
+  '/finance/cash-flow': typeof FinanceCashFlowRoute
+  '/finance/dashboard': typeof FinanceDashboardRoute
+  '/finance/dre': typeof FinanceDreRoute
   '/tools/new': typeof ToolsNewRoute
   '/tools': typeof ToolsIndexRoute
   '/auth/callback/google': typeof AuthCallbackGoogleRoute
@@ -353,6 +406,10 @@ export interface FileRoutesByTo {
   '/tools/$id/edit': typeof ToolsIdEditRoute
   '/crm/customers': typeof CrmCustomersIndexRoute
   '/crm/vehicles': typeof CrmVehiclesIndexRoute
+  '/finance/accounts': typeof FinanceAccountsIndexRoute
+  '/finance/payables': typeof FinancePayablesIndexRoute
+  '/finance/receivables': typeof FinanceReceivablesIndexRoute
+  '/finance/transactions': typeof FinanceTransactionsIndexRoute
   '/inventory/movements': typeof InventoryMovementsIndexRoute
   '/inventory/products': typeof InventoryProductsIndexRoute
   '/inventory/stocks': typeof InventoryStocksIndexRoute
@@ -377,6 +434,9 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/dashboard/units': typeof DashboardUnitsRoute
   '/dashboard/users': typeof DashboardUsersRoute
+  '/finance/cash-flow': typeof FinanceCashFlowRoute
+  '/finance/dashboard': typeof FinanceDashboardRoute
+  '/finance/dre': typeof FinanceDreRoute
   '/tools/new': typeof ToolsNewRoute
   '/tools/': typeof ToolsIndexRoute
   '/auth/callback/google': typeof AuthCallbackGoogleRoute
@@ -399,6 +459,10 @@ export interface FileRoutesById {
   '/tools/$id/edit': typeof ToolsIdEditRoute
   '/crm/customers/': typeof CrmCustomersIndexRoute
   '/crm/vehicles/': typeof CrmVehiclesIndexRoute
+  '/finance/accounts/': typeof FinanceAccountsIndexRoute
+  '/finance/payables/': typeof FinancePayablesIndexRoute
+  '/finance/receivables/': typeof FinanceReceivablesIndexRoute
+  '/finance/transactions/': typeof FinanceTransactionsIndexRoute
   '/inventory/movements/': typeof InventoryMovementsIndexRoute
   '/inventory/products/': typeof InventoryProductsIndexRoute
   '/inventory/stocks/': typeof InventoryStocksIndexRoute
@@ -424,6 +488,9 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/dashboard/units'
     | '/dashboard/users'
+    | '/finance/cash-flow'
+    | '/finance/dashboard'
+    | '/finance/dre'
     | '/tools/new'
     | '/tools/'
     | '/auth/callback/google'
@@ -446,6 +513,10 @@ export interface FileRouteTypes {
     | '/tools/$id/edit'
     | '/crm/customers/'
     | '/crm/vehicles/'
+    | '/finance/accounts/'
+    | '/finance/payables/'
+    | '/finance/receivables/'
+    | '/finance/transactions/'
     | '/inventory/movements/'
     | '/inventory/products/'
     | '/inventory/stocks/'
@@ -469,6 +540,9 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/dashboard/units'
     | '/dashboard/users'
+    | '/finance/cash-flow'
+    | '/finance/dashboard'
+    | '/finance/dre'
     | '/tools/new'
     | '/tools'
     | '/auth/callback/google'
@@ -491,6 +565,10 @@ export interface FileRouteTypes {
     | '/tools/$id/edit'
     | '/crm/customers'
     | '/crm/vehicles'
+    | '/finance/accounts'
+    | '/finance/payables'
+    | '/finance/receivables'
+    | '/finance/transactions'
     | '/inventory/movements'
     | '/inventory/products'
     | '/inventory/stocks'
@@ -514,6 +592,9 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/dashboard/units'
     | '/dashboard/users'
+    | '/finance/cash-flow'
+    | '/finance/dashboard'
+    | '/finance/dre'
     | '/tools/new'
     | '/tools/'
     | '/auth/callback/google'
@@ -536,6 +617,10 @@ export interface FileRouteTypes {
     | '/tools/$id/edit'
     | '/crm/customers/'
     | '/crm/vehicles/'
+    | '/finance/accounts/'
+    | '/finance/payables/'
+    | '/finance/receivables/'
+    | '/finance/transactions/'
     | '/inventory/movements/'
     | '/inventory/products/'
     | '/inventory/stocks/'
@@ -558,6 +643,9 @@ export interface RootRouteChildren {
   AdminCompanyRoute: typeof AdminCompanyRoute
   AdminRolesRoute: typeof AdminRolesRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  FinanceCashFlowRoute: typeof FinanceCashFlowRoute
+  FinanceDashboardRoute: typeof FinanceDashboardRoute
+  FinanceDreRoute: typeof FinanceDreRoute
   ToolsNewRoute: typeof ToolsNewRoute
   ToolsIndexRoute: typeof ToolsIndexRoute
   AuthCallbackGoogleRoute: typeof AuthCallbackGoogleRoute
@@ -580,6 +668,10 @@ export interface RootRouteChildren {
   ToolsIdEditRoute: typeof ToolsIdEditRoute
   CrmCustomersIndexRoute: typeof CrmCustomersIndexRoute
   CrmVehiclesIndexRoute: typeof CrmVehiclesIndexRoute
+  FinanceAccountsIndexRoute: typeof FinanceAccountsIndexRoute
+  FinancePayablesIndexRoute: typeof FinancePayablesIndexRoute
+  FinanceReceivablesIndexRoute: typeof FinanceReceivablesIndexRoute
+  FinanceTransactionsIndexRoute: typeof FinanceTransactionsIndexRoute
   InventoryMovementsIndexRoute: typeof InventoryMovementsIndexRoute
   InventoryProductsIndexRoute: typeof InventoryProductsIndexRoute
   InventoryStocksIndexRoute: typeof InventoryStocksIndexRoute
@@ -636,6 +728,27 @@ declare module '@tanstack/react-router' {
       path: '/tools/new'
       fullPath: '/tools/new'
       preLoaderRoute: typeof ToolsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/finance/dre': {
+      id: '/finance/dre'
+      path: '/finance/dre'
+      fullPath: '/finance/dre'
+      preLoaderRoute: typeof FinanceDreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/finance/dashboard': {
+      id: '/finance/dashboard'
+      path: '/finance/dashboard'
+      fullPath: '/finance/dashboard'
+      preLoaderRoute: typeof FinanceDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/finance/cash-flow': {
+      id: '/finance/cash-flow'
+      path: '/finance/cash-flow'
+      fullPath: '/finance/cash-flow'
+      preLoaderRoute: typeof FinanceCashFlowRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/users': {
@@ -741,6 +854,34 @@ declare module '@tanstack/react-router' {
       path: '/inventory/movements'
       fullPath: '/inventory/movements/'
       preLoaderRoute: typeof InventoryMovementsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/finance/transactions/': {
+      id: '/finance/transactions/'
+      path: '/finance/transactions'
+      fullPath: '/finance/transactions/'
+      preLoaderRoute: typeof FinanceTransactionsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/finance/receivables/': {
+      id: '/finance/receivables/'
+      path: '/finance/receivables'
+      fullPath: '/finance/receivables/'
+      preLoaderRoute: typeof FinanceReceivablesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/finance/payables/': {
+      id: '/finance/payables/'
+      path: '/finance/payables'
+      fullPath: '/finance/payables/'
+      preLoaderRoute: typeof FinancePayablesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/finance/accounts/': {
+      id: '/finance/accounts/'
+      path: '/finance/accounts'
+      fullPath: '/finance/accounts/'
+      preLoaderRoute: typeof FinanceAccountsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/crm/vehicles/': {
@@ -922,6 +1063,9 @@ const rootRouteChildren: RootRouteChildren = {
   AdminCompanyRoute: AdminCompanyRoute,
   AdminRolesRoute: AdminRolesRoute,
   AdminUsersRoute: AdminUsersRoute,
+  FinanceCashFlowRoute: FinanceCashFlowRoute,
+  FinanceDashboardRoute: FinanceDashboardRoute,
+  FinanceDreRoute: FinanceDreRoute,
   ToolsNewRoute: ToolsNewRoute,
   ToolsIndexRoute: ToolsIndexRoute,
   AuthCallbackGoogleRoute: AuthCallbackGoogleRoute,
@@ -944,6 +1088,10 @@ const rootRouteChildren: RootRouteChildren = {
   ToolsIdEditRoute: ToolsIdEditRoute,
   CrmCustomersIndexRoute: CrmCustomersIndexRoute,
   CrmVehiclesIndexRoute: CrmVehiclesIndexRoute,
+  FinanceAccountsIndexRoute: FinanceAccountsIndexRoute,
+  FinancePayablesIndexRoute: FinancePayablesIndexRoute,
+  FinanceReceivablesIndexRoute: FinanceReceivablesIndexRoute,
+  FinanceTransactionsIndexRoute: FinanceTransactionsIndexRoute,
   InventoryMovementsIndexRoute: InventoryMovementsIndexRoute,
   InventoryProductsIndexRoute: InventoryProductsIndexRoute,
   InventoryStocksIndexRoute: InventoryStocksIndexRoute,
