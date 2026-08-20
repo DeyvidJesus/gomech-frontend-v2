@@ -84,6 +84,7 @@ export function AppShell({ children }: AppShellProps) {
     { label: 'Estoque', to: '/inventory/products', icon: 'inventory_2' },
     { label: 'Ferramentas', to: '/tools', icon: 'construction' },
     { label: 'Financeiro', to: '/finance/dashboard', icon: 'payments' },
+    { label: 'Assinatura & Planos', to: '/billing', icon: 'credit_card' },
     { label: 'Usuários & Equipe', to: '/admin/users', icon: 'badge' },
     { label: 'Papéis & Permissões', to: '/admin/roles', icon: 'admin_panel_settings' },
     { label: 'Empresa & Filiais', to: '/admin/company', icon: 'domain' },

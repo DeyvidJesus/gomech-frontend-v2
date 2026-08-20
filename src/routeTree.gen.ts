@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ToolsIndexRouteImport } from './routes/tools.index'
+import { Route as BillingIndexRouteImport } from './routes/billing.index'
 import { Route as ToolsNewRouteImport } from './routes/tools.new'
 import { Route as FinanceDreRouteImport } from './routes/finance.dre'
 import { Route as FinanceDashboardRouteImport } from './routes/finance.dashboard'
@@ -83,6 +84,11 @@ const IndexRoute = IndexRouteImport.update({
 const ToolsIndexRoute = ToolsIndexRouteImport.update({
   id: '/tools/',
   path: '/tools/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BillingIndexRoute = BillingIndexRouteImport.update({
+  id: '/billing/',
+  path: '/billing/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ToolsNewRoute = ToolsNewRouteImport.update({
@@ -333,6 +339,7 @@ export interface FileRoutesByFullPath {
   '/finance/dashboard': typeof FinanceDashboardRoute
   '/finance/dre': typeof FinanceDreRoute
   '/tools/new': typeof ToolsNewRoute
+  '/billing/': typeof BillingIndexRoute
   '/tools/': typeof ToolsIndexRoute
   '/auth/callback/google': typeof AuthCallbackGoogleRoute
   '/crm/customers/$id': typeof CrmCustomersIdRoute
@@ -385,6 +392,7 @@ export interface FileRoutesByTo {
   '/finance/dashboard': typeof FinanceDashboardRoute
   '/finance/dre': typeof FinanceDreRoute
   '/tools/new': typeof ToolsNewRoute
+  '/billing': typeof BillingIndexRoute
   '/tools': typeof ToolsIndexRoute
   '/auth/callback/google': typeof AuthCallbackGoogleRoute
   '/crm/customers/$id': typeof CrmCustomersIdRoute
@@ -438,6 +446,7 @@ export interface FileRoutesById {
   '/finance/dashboard': typeof FinanceDashboardRoute
   '/finance/dre': typeof FinanceDreRoute
   '/tools/new': typeof ToolsNewRoute
+  '/billing/': typeof BillingIndexRoute
   '/tools/': typeof ToolsIndexRoute
   '/auth/callback/google': typeof AuthCallbackGoogleRoute
   '/crm/customers/$id': typeof CrmCustomersIdRoute
@@ -492,6 +501,7 @@ export interface FileRouteTypes {
     | '/finance/dashboard'
     | '/finance/dre'
     | '/tools/new'
+    | '/billing/'
     | '/tools/'
     | '/auth/callback/google'
     | '/crm/customers/$id'
@@ -544,6 +554,7 @@ export interface FileRouteTypes {
     | '/finance/dashboard'
     | '/finance/dre'
     | '/tools/new'
+    | '/billing'
     | '/tools'
     | '/auth/callback/google'
     | '/crm/customers/$id'
@@ -596,6 +607,7 @@ export interface FileRouteTypes {
     | '/finance/dashboard'
     | '/finance/dre'
     | '/tools/new'
+    | '/billing/'
     | '/tools/'
     | '/auth/callback/google'
     | '/crm/customers/$id'
@@ -647,6 +659,7 @@ export interface RootRouteChildren {
   FinanceDashboardRoute: typeof FinanceDashboardRoute
   FinanceDreRoute: typeof FinanceDreRoute
   ToolsNewRoute: typeof ToolsNewRoute
+  BillingIndexRoute: typeof BillingIndexRoute
   ToolsIndexRoute: typeof ToolsIndexRoute
   AuthCallbackGoogleRoute: typeof AuthCallbackGoogleRoute
   CrmCustomersIdRoute: typeof CrmCustomersIdRoute
@@ -721,6 +734,13 @@ declare module '@tanstack/react-router' {
       path: '/tools'
       fullPath: '/tools/'
       preLoaderRoute: typeof ToolsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/billing/': {
+      id: '/billing/'
+      path: '/billing'
+      fullPath: '/billing/'
+      preLoaderRoute: typeof BillingIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tools/new': {
@@ -1067,6 +1087,7 @@ const rootRouteChildren: RootRouteChildren = {
   FinanceDashboardRoute: FinanceDashboardRoute,
   FinanceDreRoute: FinanceDreRoute,
   ToolsNewRoute: ToolsNewRoute,
+  BillingIndexRoute: BillingIndexRoute,
   ToolsIndexRoute: ToolsIndexRoute,
   AuthCallbackGoogleRoute: AuthCallbackGoogleRoute,
   CrmCustomersIdRoute: CrmCustomersIdRoute,
