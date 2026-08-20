@@ -21,6 +21,10 @@ import { Route as AdminCompanyRouteImport } from './routes/admin.company'
 import { Route as OperationsWorkOrdersIndexRouteImport } from './routes/operations.work-orders.index'
 import { Route as OperationsQuotesIndexRouteImport } from './routes/operations.quotes.index'
 import { Route as OperationsInspectionsIndexRouteImport } from './routes/operations.inspections.index'
+import { Route as InventoryTransfersIndexRouteImport } from './routes/inventory.transfers.index'
+import { Route as InventoryStocksIndexRouteImport } from './routes/inventory.stocks.index'
+import { Route as InventoryProductsIndexRouteImport } from './routes/inventory.products.index'
+import { Route as InventoryMovementsIndexRouteImport } from './routes/inventory.movements.index'
 import { Route as CrmVehiclesIndexRouteImport } from './routes/crm.vehicles.index'
 import { Route as CrmCustomersIndexRouteImport } from './routes/crm.customers.index'
 import { Route as PortalQuotesIdRouteImport } from './routes/portal.quotes.$id'
@@ -33,6 +37,8 @@ import { Route as OperationsQuotesNewRouteImport } from './routes/operations.quo
 import { Route as OperationsQuotesIdRouteImport } from './routes/operations.quotes.$id'
 import { Route as OperationsInspectionsNewRouteImport } from './routes/operations.inspections.new'
 import { Route as OperationsInspectionsIdRouteImport } from './routes/operations.inspections.$id'
+import { Route as InventoryProductsNewRouteImport } from './routes/inventory.products.new'
+import { Route as InventoryProductsIdRouteImport } from './routes/inventory.products.$id'
 import { Route as CrmVehiclesNewRouteImport } from './routes/crm.vehicles.new'
 import { Route as CrmVehiclesIdRouteImport } from './routes/crm.vehicles.$id'
 import { Route as CrmCustomersNewRouteImport } from './routes/crm.customers.new'
@@ -103,6 +109,26 @@ const OperationsInspectionsIndexRoute =
     path: '/operations/inspections/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const InventoryTransfersIndexRoute = InventoryTransfersIndexRouteImport.update({
+  id: '/inventory/transfers/',
+  path: '/inventory/transfers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InventoryStocksIndexRoute = InventoryStocksIndexRouteImport.update({
+  id: '/inventory/stocks/',
+  path: '/inventory/stocks/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InventoryProductsIndexRoute = InventoryProductsIndexRouteImport.update({
+  id: '/inventory/products/',
+  path: '/inventory/products/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InventoryMovementsIndexRoute = InventoryMovementsIndexRouteImport.update({
+  id: '/inventory/movements/',
+  path: '/inventory/movements/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CrmVehiclesIndexRoute = CrmVehiclesIndexRouteImport.update({
   id: '/crm/vehicles/',
   path: '/crm/vehicles/',
@@ -167,6 +193,16 @@ const OperationsInspectionsIdRoute = OperationsInspectionsIdRouteImport.update({
   path: '/operations/inspections/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InventoryProductsNewRoute = InventoryProductsNewRouteImport.update({
+  id: '/inventory/products/new',
+  path: '/inventory/products/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InventoryProductsIdRoute = InventoryProductsIdRouteImport.update({
+  id: '/inventory/products/$id',
+  path: '/inventory/products/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CrmVehiclesNewRoute = CrmVehiclesNewRouteImport.update({
   id: '/crm/vehicles/new',
   path: '/crm/vehicles/new',
@@ -219,6 +255,8 @@ export interface FileRoutesByFullPath {
   '/crm/customers/new': typeof CrmCustomersNewRoute
   '/crm/vehicles/$id': typeof CrmVehiclesIdRoute
   '/crm/vehicles/new': typeof CrmVehiclesNewRoute
+  '/inventory/products/$id': typeof InventoryProductsIdRoute
+  '/inventory/products/new': typeof InventoryProductsNewRoute
   '/operations/inspections/$id': typeof OperationsInspectionsIdRoute
   '/operations/inspections/new': typeof OperationsInspectionsNewRoute
   '/operations/quotes/$id': typeof OperationsQuotesIdRoute
@@ -231,6 +269,10 @@ export interface FileRoutesByFullPath {
   '/portal/quotes/$id': typeof PortalQuotesIdRoute
   '/crm/customers/': typeof CrmCustomersIndexRoute
   '/crm/vehicles/': typeof CrmVehiclesIndexRoute
+  '/inventory/movements/': typeof InventoryMovementsIndexRoute
+  '/inventory/products/': typeof InventoryProductsIndexRoute
+  '/inventory/stocks/': typeof InventoryStocksIndexRoute
+  '/inventory/transfers/': typeof InventoryTransfersIndexRoute
   '/operations/inspections/': typeof OperationsInspectionsIndexRoute
   '/operations/quotes/': typeof OperationsQuotesIndexRoute
   '/operations/work-orders/': typeof OperationsWorkOrdersIndexRoute
@@ -252,6 +294,8 @@ export interface FileRoutesByTo {
   '/crm/customers/new': typeof CrmCustomersNewRoute
   '/crm/vehicles/$id': typeof CrmVehiclesIdRoute
   '/crm/vehicles/new': typeof CrmVehiclesNewRoute
+  '/inventory/products/$id': typeof InventoryProductsIdRoute
+  '/inventory/products/new': typeof InventoryProductsNewRoute
   '/operations/inspections/$id': typeof OperationsInspectionsIdRoute
   '/operations/inspections/new': typeof OperationsInspectionsNewRoute
   '/operations/quotes/$id': typeof OperationsQuotesIdRoute
@@ -264,6 +308,10 @@ export interface FileRoutesByTo {
   '/portal/quotes/$id': typeof PortalQuotesIdRoute
   '/crm/customers': typeof CrmCustomersIndexRoute
   '/crm/vehicles': typeof CrmVehiclesIndexRoute
+  '/inventory/movements': typeof InventoryMovementsIndexRoute
+  '/inventory/products': typeof InventoryProductsIndexRoute
+  '/inventory/stocks': typeof InventoryStocksIndexRoute
+  '/inventory/transfers': typeof InventoryTransfersIndexRoute
   '/operations/inspections': typeof OperationsInspectionsIndexRoute
   '/operations/quotes': typeof OperationsQuotesIndexRoute
   '/operations/work-orders': typeof OperationsWorkOrdersIndexRoute
@@ -286,6 +334,8 @@ export interface FileRoutesById {
   '/crm/customers/new': typeof CrmCustomersNewRoute
   '/crm/vehicles/$id': typeof CrmVehiclesIdRoute
   '/crm/vehicles/new': typeof CrmVehiclesNewRoute
+  '/inventory/products/$id': typeof InventoryProductsIdRoute
+  '/inventory/products/new': typeof InventoryProductsNewRoute
   '/operations/inspections/$id': typeof OperationsInspectionsIdRoute
   '/operations/inspections/new': typeof OperationsInspectionsNewRoute
   '/operations/quotes/$id': typeof OperationsQuotesIdRoute
@@ -298,6 +348,10 @@ export interface FileRoutesById {
   '/portal/quotes/$id': typeof PortalQuotesIdRoute
   '/crm/customers/': typeof CrmCustomersIndexRoute
   '/crm/vehicles/': typeof CrmVehiclesIndexRoute
+  '/inventory/movements/': typeof InventoryMovementsIndexRoute
+  '/inventory/products/': typeof InventoryProductsIndexRoute
+  '/inventory/stocks/': typeof InventoryStocksIndexRoute
+  '/inventory/transfers/': typeof InventoryTransfersIndexRoute
   '/operations/inspections/': typeof OperationsInspectionsIndexRoute
   '/operations/quotes/': typeof OperationsQuotesIndexRoute
   '/operations/work-orders/': typeof OperationsWorkOrdersIndexRoute
@@ -321,6 +375,8 @@ export interface FileRouteTypes {
     | '/crm/customers/new'
     | '/crm/vehicles/$id'
     | '/crm/vehicles/new'
+    | '/inventory/products/$id'
+    | '/inventory/products/new'
     | '/operations/inspections/$id'
     | '/operations/inspections/new'
     | '/operations/quotes/$id'
@@ -333,6 +389,10 @@ export interface FileRouteTypes {
     | '/portal/quotes/$id'
     | '/crm/customers/'
     | '/crm/vehicles/'
+    | '/inventory/movements/'
+    | '/inventory/products/'
+    | '/inventory/stocks/'
+    | '/inventory/transfers/'
     | '/operations/inspections/'
     | '/operations/quotes/'
     | '/operations/work-orders/'
@@ -354,6 +414,8 @@ export interface FileRouteTypes {
     | '/crm/customers/new'
     | '/crm/vehicles/$id'
     | '/crm/vehicles/new'
+    | '/inventory/products/$id'
+    | '/inventory/products/new'
     | '/operations/inspections/$id'
     | '/operations/inspections/new'
     | '/operations/quotes/$id'
@@ -366,6 +428,10 @@ export interface FileRouteTypes {
     | '/portal/quotes/$id'
     | '/crm/customers'
     | '/crm/vehicles'
+    | '/inventory/movements'
+    | '/inventory/products'
+    | '/inventory/stocks'
+    | '/inventory/transfers'
     | '/operations/inspections'
     | '/operations/quotes'
     | '/operations/work-orders'
@@ -387,6 +453,8 @@ export interface FileRouteTypes {
     | '/crm/customers/new'
     | '/crm/vehicles/$id'
     | '/crm/vehicles/new'
+    | '/inventory/products/$id'
+    | '/inventory/products/new'
     | '/operations/inspections/$id'
     | '/operations/inspections/new'
     | '/operations/quotes/$id'
@@ -399,6 +467,10 @@ export interface FileRouteTypes {
     | '/portal/quotes/$id'
     | '/crm/customers/'
     | '/crm/vehicles/'
+    | '/inventory/movements/'
+    | '/inventory/products/'
+    | '/inventory/stocks/'
+    | '/inventory/transfers/'
     | '/operations/inspections/'
     | '/operations/quotes/'
     | '/operations/work-orders/'
@@ -419,6 +491,8 @@ export interface RootRouteChildren {
   CrmCustomersNewRoute: typeof CrmCustomersNewRoute
   CrmVehiclesIdRoute: typeof CrmVehiclesIdRoute
   CrmVehiclesNewRoute: typeof CrmVehiclesNewRoute
+  InventoryProductsIdRoute: typeof InventoryProductsIdRoute
+  InventoryProductsNewRoute: typeof InventoryProductsNewRoute
   OperationsInspectionsIdRoute: typeof OperationsInspectionsIdRoute
   OperationsInspectionsNewRoute: typeof OperationsInspectionsNewRoute
   OperationsQuotesIdRoute: typeof OperationsQuotesIdRoute
@@ -431,6 +505,10 @@ export interface RootRouteChildren {
   PortalQuotesIdRoute: typeof PortalQuotesIdRoute
   CrmCustomersIndexRoute: typeof CrmCustomersIndexRoute
   CrmVehiclesIndexRoute: typeof CrmVehiclesIndexRoute
+  InventoryMovementsIndexRoute: typeof InventoryMovementsIndexRoute
+  InventoryProductsIndexRoute: typeof InventoryProductsIndexRoute
+  InventoryStocksIndexRoute: typeof InventoryStocksIndexRoute
+  InventoryTransfersIndexRoute: typeof InventoryTransfersIndexRoute
   OperationsInspectionsIndexRoute: typeof OperationsInspectionsIndexRoute
   OperationsQuotesIndexRoute: typeof OperationsQuotesIndexRoute
   OperationsWorkOrdersIndexRoute: typeof OperationsWorkOrdersIndexRoute
@@ -524,6 +602,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperationsInspectionsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/inventory/transfers/': {
+      id: '/inventory/transfers/'
+      path: '/inventory/transfers'
+      fullPath: '/inventory/transfers/'
+      preLoaderRoute: typeof InventoryTransfersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventory/stocks/': {
+      id: '/inventory/stocks/'
+      path: '/inventory/stocks'
+      fullPath: '/inventory/stocks/'
+      preLoaderRoute: typeof InventoryStocksIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventory/products/': {
+      id: '/inventory/products/'
+      path: '/inventory/products'
+      fullPath: '/inventory/products/'
+      preLoaderRoute: typeof InventoryProductsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventory/movements/': {
+      id: '/inventory/movements/'
+      path: '/inventory/movements'
+      fullPath: '/inventory/movements/'
+      preLoaderRoute: typeof InventoryMovementsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/crm/vehicles/': {
       id: '/crm/vehicles/'
       path: '/crm/vehicles'
@@ -608,6 +714,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperationsInspectionsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/inventory/products/new': {
+      id: '/inventory/products/new'
+      path: '/inventory/products/new'
+      fullPath: '/inventory/products/new'
+      preLoaderRoute: typeof InventoryProductsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventory/products/$id': {
+      id: '/inventory/products/$id'
+      path: '/inventory/products/$id'
+      fullPath: '/inventory/products/$id'
+      preLoaderRoute: typeof InventoryProductsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/crm/vehicles/new': {
       id: '/crm/vehicles/new'
       path: '/crm/vehicles/new'
@@ -687,6 +807,8 @@ const rootRouteChildren: RootRouteChildren = {
   CrmCustomersNewRoute: CrmCustomersNewRoute,
   CrmVehiclesIdRoute: CrmVehiclesIdRoute,
   CrmVehiclesNewRoute: CrmVehiclesNewRoute,
+  InventoryProductsIdRoute: InventoryProductsIdRoute,
+  InventoryProductsNewRoute: InventoryProductsNewRoute,
   OperationsInspectionsIdRoute: OperationsInspectionsIdRoute,
   OperationsInspectionsNewRoute: OperationsInspectionsNewRoute,
   OperationsQuotesIdRoute: OperationsQuotesIdRoute,
@@ -699,6 +821,10 @@ const rootRouteChildren: RootRouteChildren = {
   PortalQuotesIdRoute: PortalQuotesIdRoute,
   CrmCustomersIndexRoute: CrmCustomersIndexRoute,
   CrmVehiclesIndexRoute: CrmVehiclesIndexRoute,
+  InventoryMovementsIndexRoute: InventoryMovementsIndexRoute,
+  InventoryProductsIndexRoute: InventoryProductsIndexRoute,
+  InventoryStocksIndexRoute: InventoryStocksIndexRoute,
+  InventoryTransfersIndexRoute: InventoryTransfersIndexRoute,
   OperationsInspectionsIndexRoute: OperationsInspectionsIndexRoute,
   OperationsQuotesIndexRoute: OperationsQuotesIndexRoute,
   OperationsWorkOrdersIndexRoute: OperationsWorkOrdersIndexRoute,
