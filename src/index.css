@@ -1,41 +1,130 @@
 @import "tailwindcss";
 
 @theme {
-  /* Colors - Primary */
-  --color-primary-base: #2563EB;
-  --color-primary-dark: #4285F4;
-  
-  /* Colors - Success */
-  --color-success-green: #34A853;
-  --color-green-dark: #166534;
-  --color-green-light: #A7F3D0;
-  
-  /* Colors - Danger/Warning */
-  --color-danger-red: #BA1A1A;
-  --color-warning-orange: #A33E00;
+  /* Colors - Primary (Rust / Amber) */
+  --color-primary: #a33e00;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #ff6500;
+  --color-on-primary-container: #551d00;
+  --color-primary-fixed: #ffdbcd;
+  --color-primary-fixed-dim: #ffb596;
+  --color-on-primary-fixed: #360f00;
+  --color-on-primary-fixed-variant: #7d2d00;
+  --color-inverse-primary: #ffb596;
 
-  /* Colors - Neutrals */
-  --color-bg-app: #F9FAFB;
-  --color-surface: #FFFFFF;
-  --color-text-primary: #121C2A;
-  --color-text-secondary: #3D4756;
-  --color-border-divider: #BDC7D9;
+  /* Colors - Surface & Background */
+  --color-background: #fff8f6;
+  --color-on-background: #271812;
+  --color-surface: #fff8f6;
+  --color-surface-dim: #f0d4ca;
+  --color-surface-bright: #fff8f6;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #fff1ec;
+  --color-surface-container: #ffe9e2;
+  --color-surface-container-high: #fee2d8;
+  --color-surface-container-highest: #f8ddd2;
+  --color-surface-variant: #f8ddd2;
+  --color-surface-tint: #a33e00;
+
+  /* Colors - Text & Contrast */
+  --color-on-surface: #271812;
+  --color-on-surface-variant: #5a4136;
+  --color-inverse-surface: #3d2d26;
+  --color-inverse-on-surface: #ffede7;
+  --color-outline: #8e7164;
+  --color-outline-variant: #e3bfb1;
+
+  /* Colors - Secondary (Steel Slate) */
+  --color-secondary: #555f6f;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #d6e0f3;
+  --color-on-secondary-container: #596373;
+  --color-secondary-fixed: #d9e3f6;
+  --color-secondary-fixed-dim: #bdc7d9;
+  --color-on-secondary-fixed: #121c2a;
+  --color-on-secondary-fixed-variant: #3d4756;
+
+  /* Colors - Tertiary (Operational Green) */
+  --color-tertiary: #006e2f;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #00ad4e;
+  --color-on-tertiary-container: #003714;
+  --color-tertiary-fixed: #6bff8f;
+  --color-tertiary-fixed-dim: #4ae176;
+  --color-on-tertiary-fixed: #002109;
+  --color-on-tertiary-fixed-variant: #005321;
+
+  /* Colors - Status / Error */
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
 
   /* Typography */
   --font-manrope: "Manrope", sans-serif;
   --font-inter: "Inter", sans-serif;
-  --font-mono: "Liberation Mono", monospace;
+  --font-headline-lg: "Manrope", sans-serif;
+  --font-headline-md: "Manrope", sans-serif;
+  --font-headline-sm: "Manrope", sans-serif;
+  --font-display-lg: "Manrope", sans-serif;
+  --font-body-lg: "Inter", sans-serif;
+  --font-body-md: "Inter", sans-serif;
+  --font-body-sm: "Inter", sans-serif;
+  --font-label-md: "Inter", sans-serif;
+  --font-label-sm: "Inter", sans-serif;
+
+  /* Layout Spacing */
+  --spacing-sidebar-width: 260px;
+  --spacing-topbar-height: 64px;
+  --spacing-gutter: 20px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+
+  /* Legacy color aliases for existing components */
+  --color-primary-base: #a33e00;
+  --color-primary-dark: #8b3500;
+  --color-warning-orange: #a33e00;
+  --color-warning-orange-hover: #ff6500;
+  --color-success-green: #006e2f;
+  --color-green-dark: #003714;
+  --color-green-light: #6bff8f;
+  --color-danger-red: #ba1a1a;
+  --color-bg-app: #fff8f6;
+  --color-text-primary: #271812;
+  --color-text-secondary: #5a4136;
+  --color-border-divider: #e3bfb1;
 }
 
 @layer base {
   :root {
-    background-color: var(--color-bg-app);
-    color: var(--color-text-primary);
+    background-color: var(--color-background);
+    color: var(--color-on-background);
     font-family: var(--font-inter);
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-manrope);
-    color: var(--color-text-primary);
+    color: var(--color-on-surface);
+  }
+
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    display: inline-block;
+    vertical-align: middle;
+    line-height: 1;
+  }
+
+  .material-symbols-outlined.icon-fill {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+
+  .bg-pattern {
+    background-image: radial-gradient(var(--color-outline-variant) 1px, transparent 1px);
+    background-size: 24px 24px;
   }
 }

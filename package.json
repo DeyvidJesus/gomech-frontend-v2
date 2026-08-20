@@ -15,6 +15,7 @@
     "@tanstack/react-router": "^1.170.10",
     "@tanstack/router-plugin": "^1.168.13",
     "axios": "^1.16.1",
+    "framer-motion": "^13.1.0",
     "lucide-react": "^1.17.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",

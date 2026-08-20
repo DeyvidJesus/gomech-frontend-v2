@@ -1,43 +1,38 @@
-import axios from 'axios';
+import { api } from '@/shared/api/apiClient';
+import type { AuthResponseDto } from '../stores/authStore';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
-
-export const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+export { api };
 
 export interface LoginRequest {
   email: string;
   password?: string;
 }
 
-export interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
-  tokenType?: string;
-  expiresIn: number;
-  user?: {
-    id: string;
-    name: string;
-    email: string;
-    tenantId?: string;
-    activeUnitId?: string;
-    roles?: string[];
-    permissions?: string[];
-  } | null;
-}
+export type LoginResponse = AuthResponseDto;
 
 export interface RegisterWorkshopRequest {
   workshopName: string;
   address: string;
   bays: number;
-  services: string[];
+  services?: string[];
   ownerName: string;
   email: string;
   password?: string;
+}
+
+export interface GoogleAuthorizeResponse {
+  authorizationUrl: string;
+  state: string;
+}
+
+export interface GoogleOAuthCallbackRequest {
+  code: string;
+  state: string;
+  redirectUri?: string;
+}
+
+export interface SwitchUnitRequest {
+  unitId: string;
 }
 
 export const authApi = {
@@ -45,8 +40,30 @@ export const authApi = {
     const response = await api.post<LoginResponse>('/auth/login', data);
     return response.data;
   },
+
   register: async (data: RegisterWorkshopRequest): Promise<LoginResponse> => {
     const response = await api.post<LoginResponse>('/auth/register', data);
     return response.data;
-  }
+  },
+
+  getGoogleAuthorizeUrl: async (redirectUri?: string): Promise<GoogleAuthorizeResponse> => {
+    const response = await api.get<GoogleAuthorizeResponse>('/auth/oauth/google/authorize', {
+      params: redirectUri ? { redirectUri } : undefined,
+    });
+    return response.data;
+  },
+
+  googleCallback: async (data: GoogleOAuthCallbackRequest): Promise<LoginResponse> => {
+    const response = await api.post<LoginResponse>('/auth/oauth/google/callback', data);
+    return response.data;
+  },
+
+  switchUnit: async (unitId: string): Promise<LoginResponse> => {
+    const response = await api.post<LoginResponse>('/auth/switch-unit', { unitId });
+    return response.data;
+  },
+
+  logout: async (refreshToken?: string | null): Promise<void> => {
+    await api.post('/auth/logout', refreshToken ? { refreshToken } : undefined);
+  },
 };
