@@ -129,7 +129,7 @@ export function StockTransferList() {
   const getUnitName = (id: string) => units.find((u) => u.id === id)?.name || id.substring(0, 8);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-12">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/60 shadow-sm">
         <div>
@@ -140,7 +140,7 @@ export function StockTransferList() {
             <h1 className="text-2xl font-bold font-headline-md text-on-surface">Transferências entre Filiais</h1>
           </div>
           <p className="text-sm text-on-surface-variant mt-1">
-            Solicitações, remessas e recebimentos de peças entre unidades da oficina
+            Movimentação de peças e produtos entre unidades com controle de despacho e recebimento.
           </p>
         </div>
 
@@ -180,7 +180,7 @@ export function StockTransferList() {
           <div className="py-20 text-center text-on-surface-variant flex flex-col items-center">
             <span className="material-symbols-outlined text-[48px] text-on-surface-variant/40 mb-2">swap_horiz</span>
             <h3 className="text-lg font-semibold text-on-surface">Nenhuma transferência encontrada</h3>
-            <p className="text-sm text-on-surface-variant mt-1 max-w-sm">
+            <p className="text-sm text-on-surface-variant mt-1 max-w-[380px]">
               Inicie uma transferência de peças entre filiais quando houver necessidade de remessa.
             </p>
             <button
@@ -215,7 +215,7 @@ export function StockTransferList() {
                       {/* Transfer Number */}
                       <td className="py-3.5 px-5">
                         <div className="font-mono font-bold text-on-surface">{t.transferNumber}</div>
-                        {t.notes && <div className="text-xs text-on-surface-variant truncate max-w-xs">{t.notes}</div>}
+                        {t.notes && <div className="text-xs text-on-surface-variant truncate max-w-[320px]">{t.notes}</div>}
                       </td>
 
                       {/* Source */}
@@ -339,7 +339,7 @@ export function StockTransferList() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-surface-container-lowest w-full max-w-xl rounded-2xl border border-outline-variant/60 shadow-2xl overflow-hidden"
+              className="bg-surface-container-lowest w-full max-w-[600px] rounded-2xl border border-outline-variant/60 shadow-2xl overflow-hidden"
             >
               <div className="p-5 border-b border-outline-variant/40 flex items-center justify-between">
                 <div className="flex items-center gap-2">

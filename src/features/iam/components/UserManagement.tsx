@@ -185,7 +185,7 @@ export function UserManagement() {
 
                     {/* Roles & Units */}
                     <td className="py-3.5 px-4">
-                      <div className="flex flex-wrap items-center gap-1.5 max-w-md">
+                      <div className="flex flex-wrap items-center gap-1.5 max-w-[480px]">
                         {u.roles && u.roles.length > 0 ? (
                           u.roles.map((r, idx) => (
                             <span
@@ -327,7 +327,7 @@ function CreateUserModal({ roles, units, onClose, onSuccess }: CreateUserModalPr
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 animate-in fade-in">
-      <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+      <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl max-w-[480px] w-full p-6 shadow-xl space-y-4">
         <div className="flex items-center justify-between border-b border-outline-variant pb-3">
           <h3 className="font-headline-sm text-headline-sm font-bold text-on-surface flex items-center gap-2">
             <span className="material-symbols-outlined text-primary text-[22px]">person_add</span>
@@ -487,7 +487,7 @@ function AssignRoleModal({ user, roles, units, onClose, onSuccess }: AssignRoleM
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 animate-in fade-in">
-      <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+      <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl max-w-[480px] w-full p-6 shadow-xl space-y-4">
         <div className="flex items-center justify-between border-b border-outline-variant pb-3">
           <h3 className="font-headline-sm text-headline-sm font-bold text-on-surface flex items-center gap-2">
             <span className="material-symbols-outlined text-primary text-[22px]">shield_person</span>

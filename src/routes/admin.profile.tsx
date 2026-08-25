@@ -1,17 +1,21 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import { ProtectedLayout } from '@/shared/layouts/ProtectedLayout';
 import { useAuthStore } from '@/features/iam/stores/authStore';
-import { AccountList } from '@/features/finance/AccountList';
+import { UserProfile } from '@/features/iam/components/UserProfile';
 
-export const Route = createFileRoute('/finance/accounts/')({
+export const Route = createFileRoute('/admin/profile')({
   beforeLoad: () => {
     if (!useAuthStore.getState().isAuthenticated) {
       throw redirect({ to: '/login' });
     }
   },
-  component: () => (
-    <ProtectedLayout>
-      <AccountList />
-    </ProtectedLayout>
-  ),
+  component: ProfilePage,
 });
+
+function ProfilePage() {
+  return (
+    <ProtectedLayout>
+      <UserProfile />
+    </ProtectedLayout>
+  );
+}

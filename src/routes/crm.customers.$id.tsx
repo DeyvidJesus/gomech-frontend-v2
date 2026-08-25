@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import { ProtectedLayout } from '@/shared/layouts/ProtectedLayout';
 import { useAuthStore } from '@/features/iam/stores/authStore';
-import { CustomerForm } from '@/features/crm/components/CustomerForm';
+import { CustomerDetails } from '@/features/crm/components/CustomerDetails';
 
 export const Route = createFileRoute('/crm/customers/$id')({
   beforeLoad: () => {
@@ -9,15 +9,15 @@ export const Route = createFileRoute('/crm/customers/$id')({
       throw redirect({ to: '/login' });
     }
   },
-  component: EditCustomerPage,
+  component: CustomerDetailsPage,
 });
 
-function EditCustomerPage() {
+function CustomerDetailsPage() {
   const { id } = Route.useParams();
 
   return (
     <ProtectedLayout>
-      <CustomerForm customerId={id} />
+      <CustomerDetails customerId={id} />
     </ProtectedLayout>
   );
 }

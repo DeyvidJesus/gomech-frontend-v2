@@ -389,7 +389,7 @@ export function VehicleHistory({ vehicleId }: VehicleHistoryProps) {
 
   if (isError || !history) {
     return (
-      <div className="py-16 text-center text-error bg-surface-container-lowest rounded-2xl border border-outline-variant max-w-lg mx-auto">
+      <div className="py-16 text-center text-error bg-surface-container-lowest rounded-2xl border border-outline-variant max-w-[540px] mx-auto">
         <span className="material-symbols-outlined text-[48px]">error</span>
         <h2 className="font-headline-sm text-headline-sm font-bold text-on-surface mt-2">
           Histórico não encontrado

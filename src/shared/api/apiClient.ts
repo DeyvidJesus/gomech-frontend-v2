@@ -1,8 +1,21 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/features/iam/stores/authStore';
 
+export const getApiBaseUrl = (): string => {
+  if (import.meta.env.VITE_API_URL && !import.meta.env.VITE_API_URL.includes('localhost')) {
+    return import.meta.env.VITE_API_URL;
+  }
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host !== 'localhost' && host !== '127.0.0.1') {
+      return 'https://gomech-backend-7217905842.us-central1.run.app/api/v1';
+    }
+  }
+  return import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
+};
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1',
+  baseURL: getApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
@@ -44,11 +57,16 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
 
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    if ((error.response?.status === 401 || error.response?.status === 403) && originalRequest && !originalRequest._retry) {
       const requestUrl = originalRequest.url || '';
 
-      // Do not attempt to refresh if the failed request is login or refresh itself
-      if (requestUrl.includes('/auth/login') || requestUrl.includes('/auth/refresh')) {
+      // Do not attempt to refresh if the failed request is login, register, or refresh itself
+      if (requestUrl.includes('/auth/login') || requestUrl.includes('/auth/refresh') || requestUrl.includes('/auth/register')) {
+        return Promise.reject(error);
+      }
+
+      const refreshToken = useAuthStore.getState().refreshToken;
+      if (!refreshToken) {
         useAuthStore.getState().logout();
         return Promise.reject(error);
       }

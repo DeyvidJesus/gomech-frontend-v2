@@ -136,6 +136,10 @@ function QuoteEditorContent({ quote, activeUnitId }: QuoteEditorContentProps) {
   const [activeNotesTab, setActiveNotesTab] = useState<'CUSTOMER' | 'TERMS'>('CUSTOMER');
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
   const [decisionModalOpen, setDecisionModalOpen] = useState(false);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [revisionModalOpen, setRevisionModalOpen] = useState(false);
+  const [revisionNotes, setRevisionNotes] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
 
   // Financial calculations in real-time
@@ -176,12 +180,45 @@ function QuoteEditorContent({ quote, activeUnitId }: QuoteEditorContentProps) {
     }, [items]);
 
   // Mutations
+  const rejectInternallyMutation = useMutation({
+    mutationFn: (reason: string) => operationsApi.rejectQuoteInternally(quoteId, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['operations', 'quote', quoteId] });
+      queryClient.invalidateQueries({ queryKey: ['operations', 'quotes'] });
+      setRejectModalOpen(false);
+    },
+  });
+
+  const requestRevisionMutation = useMutation({
+    mutationFn: (notes: string) => operationsApi.requestQuoteRevision(quoteId, notes),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['operations', 'quote', quoteId] });
+      queryClient.invalidateQueries({ queryKey: ['operations', 'quotes'] });
+      setRevisionModalOpen(false);
+    },
+  });
+
   const saveItemsMutation = useMutation({
     mutationFn: () => operationsApi.updateQuoteItems(quoteId, items),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['operations', 'quote', quoteId] });
-      setFeedbackMsg('Itens e cálculos salvos com sucesso!');
-      setTimeout(() => setFeedbackMsg(null), 3500);
+      queryClient.invalidateQueries({ queryKey: ['operations', 'quotes'] });
+      setFeedbackMsg('Itens e cálculos atualizados com sucesso!');
+      setTimeout(() => setFeedbackMsg(null), 3000);
+    },
+  });
+
+  const saveNotesMutation = useMutation({
+    mutationFn: () =>
+      operationsApi.updateQuote(quoteId, {
+        notes,
+        termsAndConditions: terms,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['operations', 'quote', quoteId] });
+      queryClient.invalidateQueries({ queryKey: ['operations', 'quotes'] });
+      setFeedbackMsg('Observações salvas com sucesso!');
+      setTimeout(() => setFeedbackMsg(null), 3000);
     },
   });
 
@@ -264,6 +301,21 @@ function QuoteEditorContent({ quote, activeUnitId }: QuoteEditorContentProps) {
     setTimeout(() => setCopiedLink(false), 3000);
   };
 
+  const openWhatsAppSend = () => {
+    const portalUrl = `${window.location.origin}/portal/quotes/${quoteId}`;
+    const cleanPhone = ((quote as { customerPhone?: string })?.customerPhone || '').replace(/\D/g, '');
+    const phoneWithDDI = cleanPhone ? (cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`) : '';
+    const message = `Olá ${quote?.customerName || 'Cliente'}, seu orçamento na oficina está pronto no valor de R$ ${Number(quote?.totalAmount || 0).toFixed(2)}.\n\nAcesse o link abaixo para conferir os itens e realizar a aprovação digital:\n${portalUrl}`;
+
+    sendToCustomerMutation.mutate();
+
+    if (phoneWithDDI) {
+      window.open(`https://api.whatsapp.com/send?phone=${phoneWithDDI}&text=${encodeURIComponent(message)}`, '_blank');
+    } else {
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
+    }
+  };
+
   const getQuoteStatusLabel = (status: string) => {
     switch (status) {
       case 'DRAFT':
@@ -290,7 +342,7 @@ function QuoteEditorContent({ quote, activeUnitId }: QuoteEditorContentProps) {
   };
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto py-4 animate-in fade-in duration-200">
+    <div className="flex flex-col gap-6 max-w-[1400px] mx-auto py-4 animate-in fade-in duration-200">
       {/* Header */}
       <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-outline-variant">
         <div>
@@ -379,15 +431,35 @@ function QuoteEditorContent({ quote, activeUnitId }: QuoteEditorContentProps) {
 
           {/* Workflow Step 2: PENDING_INTERNAL_APPROVAL */}
           {quote.status === 'PENDING_INTERNAL_APPROVAL' && (
-            <button
-              type="button"
-              onClick={() => approveInternallyMutation.mutate()}
-              disabled={approveInternallyMutation.isPending}
-              className="px-5 py-2 bg-tertiary text-on-tertiary font-label-md text-label-md font-bold rounded-lg hover:opacity-90 transition-all shadow-sm flex items-center gap-1.5"
-            >
-              <span className="material-symbols-outlined text-[18px]">verified</span>
-              Aprovar Orçamento (Gerência)
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setRevisionModalOpen(true)}
+                className="px-4 py-2 bg-surface-container border border-outline-variant text-on-surface font-label-md text-label-md font-bold rounded-lg hover:bg-surface-bright transition-all shadow-xs flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[18px]">edit_note</span>
+                Solicitar Ajuste
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRejectModalOpen(true)}
+                className="px-4 py-2 bg-error/10 border border-error/20 text-error font-label-md text-label-md font-bold rounded-lg hover:bg-error/20 transition-all shadow-xs flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[18px]">cancel</span>
+                Recusar
+              </button>
+
+              <button
+                type="button"
+                onClick={() => approveInternallyMutation.mutate()}
+                disabled={approveInternallyMutation.isPending}
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-label-md text-label-md font-bold rounded-lg transition-all shadow-sm flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[18px]">verified</span>
+                Aprovar Orçamento (Gerência)
+              </button>
+            </div>
           )}
 
           {/* Workflow Step 3: INTERNAL_APPROVED */}
@@ -406,12 +478,22 @@ function QuoteEditorContent({ quote, activeUnitId }: QuoteEditorContentProps) {
 
               <button
                 type="button"
+                onClick={openWhatsAppSend}
+                disabled={sendToCustomerMutation.isPending}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-label-md text-label-md font-bold rounded-lg transition-all shadow-sm flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[18px]">chat</span>
+                Enviar via WhatsApp
+              </button>
+
+              <button
+                type="button"
                 onClick={() => sendToCustomerMutation.mutate()}
                 disabled={sendToCustomerMutation.isPending}
-                className="px-5 py-2 bg-primary text-on-primary font-label-md text-label-md font-bold rounded-lg hover:bg-primary-container transition-all shadow-sm flex items-center gap-1.5"
+                className="px-4 py-2 bg-primary text-on-primary font-label-md text-label-md font-bold rounded-lg hover:bg-primary-container transition-all shadow-sm flex items-center gap-1.5"
               >
                 <span className="material-symbols-outlined text-[18px]">send</span>
-                Enviar ao Cliente (WhatsApp / E-mail)
+                Marcar como Enviado
               </button>
             </>
           )}
@@ -778,6 +860,20 @@ function QuoteEditorContent({ quote, activeUnitId }: QuoteEditorContentProps) {
                   className="w-full p-2.5 bg-surface border border-outline-variant rounded-lg text-body-sm text-on-surface resize-none focus:border-primary focus:ring-1 focus:ring-primary outline-none disabled:bg-transparent"
                 ></textarea>
               )}
+
+              {isEditable && (
+                <div className="mt-3 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => saveNotesMutation.mutate()}
+                    disabled={saveNotesMutation.isPending}
+                    className="px-3.5 py-1.5 bg-surface-container border border-outline-variant text-on-surface hover:bg-surface-bright rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors shadow-xs"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">save</span>
+                    Salvar Observações / Termos
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -794,6 +890,94 @@ function QuoteEditorContent({ quote, activeUnitId }: QuoteEditorContentProps) {
             setDecisionModalOpen(false);
           }}
         />
+      )}
+
+      {/* Internal Rejection Modal */}
+      {rejectModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl max-w-[480px] w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-outline-variant pb-3">
+              <h3 className="font-bold text-base text-on-surface">Recusar Orçamento</h3>
+              <button onClick={() => setRejectModalOpen(false)} className="text-on-surface-variant hover:text-on-surface">
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            <p className="text-xs text-on-surface-variant">
+              Informe a justificativa da recusa deste orçamento pela gerência. O status será alterado para cancelado.
+            </p>
+
+            <textarea
+              rows={3}
+              placeholder="Ex: Margem de lucro insuficiente nas peças, rever fornecedor..."
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              className="w-full p-3 bg-surface border border-outline-variant rounded-lg text-sm text-on-surface resize-none focus:border-error focus:ring-1 focus:ring-error outline-none"
+            />
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setRejectModalOpen(false)}
+                className="px-4 py-2 border border-outline-variant rounded-lg text-xs font-semibold text-on-surface hover:bg-surface-container"
+              >
+                Voltar
+              </button>
+              <button
+                type="button"
+                disabled={rejectInternallyMutation.isPending}
+                onClick={() => rejectInternallyMutation.mutate(rejectReason)}
+                className="px-4 py-2 bg-error text-on-error rounded-lg text-xs font-bold hover:bg-error/90 transition-colors"
+              >
+                Confirmar Recusa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Request Revision Modal */}
+      {revisionModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl max-w-[480px] w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-outline-variant pb-3">
+              <h3 className="font-bold text-base text-on-surface">Solicitar Ajustes no Orçamento</h3>
+              <button onClick={() => setRevisionModalOpen(false)} className="text-on-surface-variant hover:text-on-surface">
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            <p className="text-xs text-on-surface-variant">
+              Descreva as alterações necessárias para que o consultor técnico ou mecânico revise os itens orçados.
+            </p>
+
+            <textarea
+              rows={3}
+              placeholder="Ex: Adicionar 1h de mão de obra para alinhamento e trocar marca do óleo..."
+              value={revisionNotes}
+              onChange={(e) => setRevisionNotes(e.target.value)}
+              className="w-full p-3 bg-surface border border-outline-variant rounded-lg text-sm text-on-surface resize-none focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+            />
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setRevisionModalOpen(false)}
+                className="px-4 py-2 border border-outline-variant rounded-lg text-xs font-semibold text-on-surface hover:bg-surface-container"
+              >
+                Voltar
+              </button>
+              <button
+                type="button"
+                disabled={requestRevisionMutation.isPending}
+                onClick={() => requestRevisionMutation.mutate(revisionNotes)}
+                className="px-4 py-2 bg-primary text-on-primary rounded-lg text-xs font-bold hover:bg-primary-container transition-colors"
+              >
+                Enviar para Revisão
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -864,7 +1048,7 @@ function NewQuoteForm({ activeUnitId }: NewQuoteFormProps) {
   };
 
   return (
-    <div className="max-w-2xl mx-auto py-6 space-y-6 animate-in fade-in">
+    <div className="max-w-[680px] mx-auto py-6 space-y-6 animate-in fade-in">
       <div>
         <h1 className="font-headline-lg text-headline-lg font-bold text-on-surface">
           Novo Orçamento
@@ -1011,7 +1195,7 @@ function CustomerDecisionModal({ quoteId, onClose, onSuccess }: CustomerDecision
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 animate-in fade-in">
-      <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+      <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl max-w-[480px] w-full p-6 shadow-xl space-y-4">
         <div className="flex items-center justify-between border-b border-outline-variant pb-3">
           <h3 className="font-headline-sm text-headline-sm font-bold text-on-surface flex items-center gap-2">
             <span className="material-symbols-outlined text-primary text-[22px]">how_to_reg</span>

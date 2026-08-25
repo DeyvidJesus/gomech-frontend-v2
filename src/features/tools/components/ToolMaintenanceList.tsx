@@ -112,18 +112,18 @@ export function ToolMaintenanceList() {
   const totalElements = maintenancesResponse?.totalElements || 0;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-16">
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-16">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/60 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
             <span className="p-2 rounded-xl bg-primary/10 text-primary">
-              <span className="material-symbols-outlined text-[24px]">build</span>
+              <span className="material-symbols-outlined text-[24px]">verified</span>
             </span>
-            <h1 className="text-2xl font-bold font-headline-md text-on-surface">Calibrações & Manutenções</h1>
+            <h1 className="text-2xl font-bold font-headline-md text-on-surface">Manutenções & Calibrações</h1>
           </div>
           <p className="text-sm text-on-surface-variant mt-1">
-            Acompanhamento de aferições metrológicas periódicas, laudos técnicos e reparos de ferramentas
+            Planejamento de revisões preventivas, calibrações de torquímetros, alinhadores e scanners.
           </p>
         </div>
 
@@ -153,13 +153,13 @@ export function ToolMaintenanceList() {
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-primary text-on-primary hover:bg-primary-container transition-colors shadow-sm active:scale-95"
           >
             <span className="material-symbols-outlined text-[18px]">add</span>
-            Agendar Manutenção
+            Agendar Calibração
           </button>
         </div>
       </div>
 
-      {/* Maintenances Table Card */}
-      <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/60 shadow-sm overflow-hidden">
+      {/* Main Table Card */}
+      <div className="bg-surface-container-lowest border border-outline-variant/60 rounded-2xl shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3 text-on-surface-variant">
             <span className="material-symbols-outlined animate-spin text-[32px] text-primary">progress_activity</span>
@@ -169,7 +169,7 @@ export function ToolMaintenanceList() {
           <div className="py-20 text-center text-on-surface-variant flex flex-col items-center">
             <span className="material-symbols-outlined text-[48px] text-on-surface-variant/40 mb-2">build</span>
             <h3 className="text-lg font-semibold text-on-surface">Nenhum registro de manutenção</h3>
-            <p className="text-sm text-on-surface-variant mt-1 max-w-sm">
+            <p className="text-sm text-on-surface-variant mt-1 max-w-[380px]">
               Mantenha os instrumentos da oficina em conformidade técnica agendando calibrações periódicas.
             </p>
             <button
@@ -291,7 +291,7 @@ export function ToolMaintenanceList() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-surface-container-lowest w-full max-w-lg rounded-2xl border border-outline-variant/60 shadow-2xl overflow-hidden"
+              className="bg-surface-container-lowest w-full max-w-[540px] rounded-2xl border border-outline-variant/60 shadow-2xl overflow-hidden"
             >
               <div className="p-5 border-b border-outline-variant/40 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -439,7 +439,7 @@ export function ToolMaintenanceList() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-surface-container-lowest w-full max-w-lg rounded-2xl border border-outline-variant/60 shadow-2xl overflow-hidden"
+              className="bg-surface-container-lowest w-full max-w-[540px] rounded-2xl border border-outline-variant/60 shadow-2xl overflow-hidden"
             >
               <div className="p-5 border-b border-outline-variant/40 flex items-center justify-between">
                 <div className="flex items-center gap-2">

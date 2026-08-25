@@ -57,7 +57,7 @@ export function InventoryMovementList() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-12">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/60 shadow-sm">
         <div>
@@ -144,7 +144,7 @@ export function InventoryMovementList() {
           <div className="py-20 text-center text-on-surface-variant flex flex-col items-center">
             <span className="material-symbols-outlined text-[48px] text-on-surface-variant/40 mb-2">history</span>
             <h3 className="text-lg font-semibold text-on-surface">Nenhuma movimentação registrada</h3>
-            <p className="text-sm text-on-surface-variant mt-1 max-w-sm">
+            <p className="text-sm text-on-surface-variant mt-1 max-w-[420px]">
               As transações contábeis de estoque aparecerão aqui automaticamente conforme peças forem consumidas ou transferidas.
             </p>
           </div>
@@ -200,7 +200,7 @@ export function InventoryMovementList() {
                       <td className="py-3.5 px-4">
                         <div className="font-semibold text-on-surface text-xs">{getReasonLabel(m.reason)}</div>
                         {m.notes && (
-                          <div className="text-[11px] text-on-surface-variant truncate max-w-xs">{m.notes}</div>
+                          <div className="text-[11px] text-on-surface-variant truncate max-w-[320px]">{m.notes}</div>
                         )}
                       </td>
 

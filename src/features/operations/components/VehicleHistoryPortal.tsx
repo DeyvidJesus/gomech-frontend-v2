@@ -253,15 +253,14 @@ export function VehicleHistoryPortal({ vehicleId }: VehicleHistoryPortalProps) {
 
   if (isError || !history) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
-        <div className="text-center max-w-md">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="material-symbols-outlined text-red-500 text-[32px]">error</span>
-          </div>
-          <h1 className="text-2xl font-bold text-slate-800 mb-2">Dossiê não encontrado</h1>
-          <p className="text-slate-500">
-            {(error as Error)?.message ||
-              'Não foi possível carregar o histórico deste veículo. Verifique o link ou entre em contato com a oficina.'}
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="text-center max-w-[480px]">
+          <span className="material-symbols-outlined text-[56px] text-slate-300 block mb-3">
+            car_repair
+          </span>
+          <h2 className="text-xl font-bold text-slate-800 mb-2">Histórico não disponível</h2>
+          <p className="text-sm text-slate-500">
+            {(error as Error)?.message || 'Não encontramos registros para o veículo informado ou o link expirou.'}
           </p>
         </div>
       </div>
@@ -287,7 +286,7 @@ export function VehicleHistoryPortal({ vehicleId }: VehicleHistoryPortalProps) {
     <div className="min-h-screen bg-slate-50 font-sans">
       {/* ── Hero Header ──────────────────────────────────────────────── */}
       <div className="bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700 px-4 pt-12 pb-24">
-        <div className="max-w-3xl mx-auto text-center">
+        <div className="max-w-[800px] mx-auto text-center">
           {/* GoMech Brand */}
           <div className="flex items-center justify-center gap-2 mb-8">
             <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
@@ -332,7 +331,7 @@ export function VehicleHistoryPortal({ vehicleId }: VehicleHistoryPortalProps) {
       </div>
 
       {/* ── Metric Cards (overlapping hero) ──────────────────────────── */}
-      <div className="max-w-3xl mx-auto px-4 -mt-12">
+      <div className="max-w-[800px] mx-auto px-4 -mt-12">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
           <PortalMetricCard
             icon="payments"

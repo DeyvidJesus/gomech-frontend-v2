@@ -223,7 +223,7 @@ export function VehicleForm({ vehicleId, preselectedCustomerId }: VehicleFormPro
   }
 
   return (
-    <div className="max-w-5xl mx-auto py-4 animate-in fade-in duration-200">
+    <div className="max-w-[1080px] mx-auto py-4 animate-in fade-in duration-200">
       {/* Page Header */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 pb-4 border-b border-outline-variant">
         <div>
@@ -423,7 +423,7 @@ export function VehicleForm({ vehicleId, preselectedCustomerId }: VehicleFormPro
                 <label className="font-label-sm text-label-sm text-on-surface-variant font-medium" htmlFor="km">
                   Quilometragem Atual (KM)
                 </label>
-                <div className="relative max-w-xs">
+                <div className="relative max-w-[320px]">
                   <input
                     id="km"
                     type="number"

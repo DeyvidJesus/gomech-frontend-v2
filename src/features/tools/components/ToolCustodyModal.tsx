@@ -79,7 +79,7 @@ export function ToolCustodyModal({ tool, onClose, onSuccess }: ToolCustodyModalP
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-surface-container-lowest w-full max-w-md rounded-2xl border border-outline-variant/60 shadow-2xl overflow-hidden"
+        className="bg-surface-container-lowest w-full max-w-[480px] rounded-2xl border border-outline-variant/60 shadow-2xl overflow-hidden"
       >
         {/* Header */}
         <div className="p-5 border-b border-outline-variant/40 flex items-center justify-between">

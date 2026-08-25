@@ -1,12 +1,4 @@
 import React from 'react';
-import {
-  Check,
-  Zap,
-  Sparkles,
-  Shield,
-  Layers,
-  CheckCircle2,
-} from 'lucide-react';
 import type { BillingPlan, Subscription } from '../types';
 
 interface PlansPricingViewProps {
@@ -25,13 +17,13 @@ export const PlansPricingView: React.FC<PlansPricingViewProps> = ({
   const getPlanIcon = (code: string) => {
     switch (code) {
       case 'STARTER':
-        return <Zap className="w-5 h-5 text-amber-400" />;
+        return <span className="material-symbols-outlined text-[24px] text-amber-500">bolt</span>;
       case 'PRO':
-        return <Sparkles className="w-5 h-5 text-indigo-400" />;
+        return <span className="material-symbols-outlined text-[24px] text-primary">auto_awesome</span>;
       case 'ENTERPRISE':
-        return <Shield className="w-5 h-5 text-purple-400" />;
+        return <span className="material-symbols-outlined text-[24px] text-purple-600">verified_user</span>;
       default:
-        return <Layers className="w-5 h-5 text-blue-400" />;
+        return <span className="material-symbols-outlined text-[24px] text-blue-500">layers</span>;
     }
   };
 
@@ -91,12 +83,12 @@ export const PlansPricingView: React.FC<PlansPricingViewProps> = ({
   const sortedPlans = [...plans].sort((a, b) => a.price - b.price);
 
   return (
-    <div className="space-y-8">
-      <div className="text-center max-w-2xl mx-auto space-y-2">
-        <h2 className="text-2xl font-bold text-white tracking-tight">
+    <div className="space-y-8 animate-in fade-in">
+      <div className="text-center max-w-[720px] mx-auto space-y-2">
+        <h2 className="text-2xl sm:text-3xl font-bold text-on-surface tracking-tight font-headline-lg">
           Planos transparentes para impulsionar sua oficina
         </h2>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-on-surface-variant font-body-md">
           Escolha o plano que melhor atende o volume de atendimentos da sua equipe. Atualize ou cancele a qualquer momento.
         </p>
       </div>
@@ -111,46 +103,46 @@ export const PlansPricingView: React.FC<PlansPricingViewProps> = ({
             return (
               <div
                 key={plan.id}
-                className={`relative flex flex-col justify-between p-6 rounded-2xl border transition-all duration-200 ${
+                className={`relative flex flex-col justify-between p-6 sm:p-7 rounded-3xl border transition-all duration-200 shadow-sm ${
                   isCurrent
-                    ? 'bg-slate-900/90 border-indigo-500 ring-2 ring-indigo-500/40 shadow-xl shadow-indigo-950/40'
+                    ? 'bg-surface-container-lowest border-primary ring-2 ring-primary/30 shadow-md'
                     : isPopular
-                    ? 'bg-slate-900/80 border-indigo-500/60 shadow-lg shadow-indigo-950/30'
-                    : 'bg-slate-900/40 border-slate-800 hover:border-slate-700'
+                    ? 'bg-surface-container-lowest border-primary/60 hover:border-primary shadow-md'
+                    : 'bg-surface-container-lowest border-outline-variant hover:border-outline'
                 }`}
               >
                 {/* Popular badge */}
                 {isPopular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[10px] font-bold uppercase tracking-wider rounded-full shadow-md">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-0.5 bg-primary text-on-primary text-[10px] font-bold uppercase tracking-wider rounded-full shadow-sm">
                     Mais Escolhido
                   </div>
                 )}
 
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <div className="p-2.5 bg-slate-800/80 border border-slate-700/60 rounded-xl">
+                    <div className="p-3 bg-surface-container border border-outline-variant/60 rounded-2xl flex items-center justify-center">
                       {getPlanIcon(plan.code)}
                     </div>
                     {isCurrent && (
-                      <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span className="flex items-center gap-1 text-[11px] font-bold text-tertiary bg-tertiary-container/30 border border-tertiary/20 px-2.5 py-1 rounded-full">
+                        <span className="material-symbols-outlined text-[14px]">check_circle</span>
                         Plano Atual
                       </span>
                     )}
                   </div>
 
-                  <h3 className="text-lg font-bold text-white">{plan.name}</h3>
-                  <p className="text-xs text-slate-400 mt-1 min-h-[36px]">
+                  <h3 className="text-lg font-bold text-on-surface">{plan.name}</h3>
+                  <p className="text-xs text-on-surface-variant mt-1.5 min-h-[36px] leading-relaxed">
                     {getPlanDescription(plan.code)}
                   </p>
 
-                  <div className="my-6 pb-6 border-b border-slate-800">
+                  <div className="my-6 pb-6 border-b border-outline-variant/60">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-xs text-slate-400 font-medium">R$</span>
-                      <span className="text-3xl font-extrabold text-white tracking-tight">
+                      <span className="text-xs text-on-surface-variant font-medium">R$</span>
+                      <span className="text-3xl sm:text-4xl font-extrabold font-mono text-on-surface tracking-tight">
                         {plan.price.toFixed(2)}
                       </span>
-                      <span className="text-xs text-slate-400">/ mês</span>
+                      <span className="text-xs text-on-surface-variant">/ mês</span>
                     </div>
                   </div>
 
@@ -158,15 +150,17 @@ export const PlansPricingView: React.FC<PlansPricingViewProps> = ({
                     {getFeaturesList(plan.code).map((f, i) => (
                       <li key={i} className="flex items-start gap-2.5 text-xs">
                         <div
-                          className={`p-0.5 rounded-full mt-0.5 ${
+                          className={`p-0.5 rounded-full mt-0.5 shrink-0 ${
                             f.ok
-                              ? 'bg-emerald-500/20 text-emerald-400'
-                              : 'bg-slate-800 text-slate-600'
+                              ? 'bg-tertiary-container/30 text-tertiary'
+                              : 'bg-surface-container text-outline'
                           }`}
                         >
-                          <Check className="w-3 h-3" />
+                          <span className="material-symbols-outlined text-[14px]">
+                            {f.ok ? 'check' : 'close'}
+                          </span>
                         </div>
-                        <span className={f.ok ? 'text-slate-300' : 'text-slate-500 line-through'}>
+                        <span className={f.ok ? 'text-on-surface font-medium' : 'text-on-surface-variant/60 line-through'}>
                           {f.text}
                         </span>
                       </li>
@@ -178,15 +172,22 @@ export const PlansPricingView: React.FC<PlansPricingViewProps> = ({
                   type="button"
                   onClick={() => onSelectPlan(plan)}
                   disabled={isCurrent}
-                  className={`w-full py-2.5 px-4 rounded-xl text-xs font-semibold transition-all ${
+                  className={`w-full py-3 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm ${
                     isCurrent
-                      ? 'bg-slate-800 text-slate-500 cursor-default'
+                      ? 'bg-surface-container text-on-surface-variant cursor-default'
                       : isPopular
-                      ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30'
-                      : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-700'
+                      ? 'bg-primary hover:bg-primary-container text-on-primary shadow-primary/20'
+                      : 'bg-surface-container hover:bg-surface-container-high text-on-surface border border-outline-variant'
                   }`}
                 >
-                  {isCurrent ? 'Plano Ativo' : 'Escolher Este Plano'}
+                  {isCurrent ? (
+                    'Plano Ativo'
+                  ) : (
+                    <>
+                      <span>Contratar {plan.name}</span>
+                      <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                    </>
+                  )}
                 </button>
               </div>
             );

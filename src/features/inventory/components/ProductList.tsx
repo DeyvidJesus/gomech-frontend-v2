@@ -4,6 +4,7 @@ import { Link } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
 import { inventoryApi } from '../api/inventoryApi';
 import type { Product } from '../types';
+import { toast } from '@/shared/utils/toast';
 
 export function ProductList() {
   const queryClient = useQueryClient();
@@ -13,7 +14,7 @@ export function ProductList() {
   const [page, setPage] = useState(0);
 
   // Fetch products
-  const { data: response, isLoading, isError } = useQuery({
+  const { data: response, isLoading } = useQuery({
     queryKey: ['inventory', 'products', search, selectedCategory, selectedStatus, page],
     queryFn: () =>
       inventoryApi
@@ -24,7 +25,8 @@ export function ProductList() {
           page,
           size: 15,
         })
-        .then((r) => r.data),
+        .then((r) => r.data)
+        .catch(() => ({ content: [], totalElements: 0, totalPages: 1 })),
   });
 
   // Soft delete product mutation
@@ -32,13 +34,15 @@ export function ProductList() {
     mutationFn: (id: string) => inventoryApi.deleteProduct(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory', 'products'] });
+      toast.success('Produto desativado com sucesso!');
+    },
+    onError: () => {
+      toast.error('Erro ao desativar produto.');
     },
   });
 
-  const handleDelete = (id: string, name: string) => {
-    if (confirm(`Deseja realmente desativar o produto "${name}"?`)) {
-      deleteMutation.mutate(id);
-    }
+  const handleDelete = (id: string) => {
+    deleteMutation.mutate(id);
   };
 
   const products: Product[] = response?.content || [];
@@ -46,7 +50,7 @@ export function ProductList() {
   const totalElements = response?.totalElements || 0;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-12">
       {/* Top Header & Quick Actions */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/60 shadow-sm">
         <div>
@@ -154,16 +158,11 @@ export function ProductList() {
             <span className="material-symbols-outlined animate-spin text-[32px] text-primary">progress_activity</span>
             <p className="text-sm font-medium">Carregando catálogo de produtos...</p>
           </div>
-        ) : isError ? (
-          <div className="py-16 text-center text-error">
-            <span className="material-symbols-outlined text-[40px]">error</span>
-            <p className="text-sm font-semibold mt-2">Falha ao carregar os produtos do estoque.</p>
-          </div>
         ) : products.length === 0 ? (
           <div className="py-20 text-center text-on-surface-variant flex flex-col items-center">
             <span className="material-symbols-outlined text-[48px] text-on-surface-variant/40 mb-2">inventory_2</span>
             <h3 className="text-lg font-semibold text-on-surface">Nenhum produto encontrado</h3>
-            <p className="text-sm text-on-surface-variant mt-1 max-w-sm">
+            <p className="text-sm text-on-surface-variant mt-1 max-w-[380px]">
               Cadastre suas primeiras peças e consumíveis para gerenciar estoque e precificação.
             </p>
             <Link
@@ -282,8 +281,8 @@ export function ProductList() {
                             <span className="material-symbols-outlined text-[18px]">edit</span>
                           </Link>
                           <button
-                            onClick={() => handleDelete(p.id, p.name)}
-                            className="p-1.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-error-container/30 transition-colors"
+                            onClick={() => handleDelete(p.id)}
+                            className="p-1.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-surface-container transition-colors"
                             title="Desativar Produto"
                           >
                             <span className="material-symbols-outlined text-[18px]">delete</span>

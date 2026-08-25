@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import { ProtectedLayout } from '@/shared/layouts/ProtectedLayout';
 import { useAuthStore } from '@/features/iam/stores/authStore';
-import { VehicleForm } from '@/features/crm/components/VehicleForm';
+import { VehicleDetails } from '@/features/crm/components/VehicleDetails';
 
 export const Route = createFileRoute('/crm/vehicles/$id')({
   beforeLoad: () => {
@@ -9,15 +9,15 @@ export const Route = createFileRoute('/crm/vehicles/$id')({
       throw redirect({ to: '/login' });
     }
   },
-  component: EditVehiclePage,
+  component: VehicleDetailsPage,
 });
 
-function EditVehiclePage() {
+function VehicleDetailsPage() {
   const { id } = Route.useParams();
 
   return (
     <ProtectedLayout>
-      <VehicleForm vehicleId={id} />
+      <VehicleDetails vehicleId={id} />
     </ProtectedLayout>
   );
 }

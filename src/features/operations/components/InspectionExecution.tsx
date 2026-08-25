@@ -80,6 +80,13 @@ function InspectionExecutionContent({ inspection }: InspectionExecutionContentPr
   const [completeNotes, setCompleteNotes] = useState('');
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
 
+  // Check if a quote is already generated from this inspection
+  const { data: existingQuotesData } = useQuery({
+    queryKey: ['operations', 'quotes', 'by-inspection', inspection.id],
+    queryFn: () => operationsApi.getQuotes({ unitId: inspection.unitId }),
+  });
+  const existingQuote = existingQuotesData?.content?.find((q) => q.inspectionId === inspection.id);
+
   // Save Items Mutation (Draft)
   const saveItemsMutation = useMutation({
     mutationFn: (items: SaveInspectionItemRequest[]) =>
@@ -286,6 +293,19 @@ function InspectionExecutionContent({ inspection }: InspectionExecutionContentPr
                 Finalizar Vistoria
               </button>
             </>
+          ) : existingQuote ? (
+            <button
+              type="button"
+              onClick={() =>
+                navigate({
+                  to: `/operations/quotes/${existingQuote.id}` as never,
+                })
+              }
+              className="px-5 py-2 bg-secondary text-on-secondary font-label-md text-label-md font-bold rounded-lg hover:opacity-90 transition-all shadow-sm flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+              Ver Orçamento Gerado (#{existingQuote.id.slice(0, 8).toUpperCase()})
+            </button>
           ) : (
             <button
               type="button"

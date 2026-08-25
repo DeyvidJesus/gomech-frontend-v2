@@ -43,6 +43,7 @@ export interface AppointmentSummaryResponse {
   estimatedEndAt?: string;
   status: AppointmentStatus;
   serviceType?: string;
+  assignedUserId?: string;
 }
 
 export interface CreateAppointmentRequest {
@@ -53,6 +54,7 @@ export interface CreateAppointmentRequest {
   estimatedEndAt?: string;
   serviceType?: string;
   notes?: string;
+  assignedUserId?: string;
 }
 
 export interface UpdateAppointmentRequest {
@@ -573,3 +575,42 @@ export interface VehicleHistoryResponse {
   workOrders: VehicleHistoryWorkOrder[];
   inspections: VehicleHistoryInspection[];
 }
+
+export interface PublicQuoteItemResponse {
+  id: string;
+  type: QuoteItemType;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  discountAmount: number;
+  totalAmount: number;
+}
+
+export interface PublicQuoteResponse {
+  id: string;
+  status: QuoteStatus;
+  customerApprovalStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+  workshopName: string;
+  workshopAddress?: string;
+  logoUrl?: string;
+  customerName: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  vehiclePlate?: string;
+  vehicleModel?: string;
+  vehicleYear?: number;
+  subtotalAmount: number;
+  discountAmount: number;
+  taxAmount: number;
+  totalLaborAmount: number;
+  totalPartsAmount: number;
+  totalAmount: number;
+  validUntil?: string;
+  notes?: string;
+  termsAndConditions?: string;
+  customerDecisionNotes?: string;
+  customerDecisionAt?: string;
+  items: PublicQuoteItemResponse[];
+  createdAt: string;
+}
+

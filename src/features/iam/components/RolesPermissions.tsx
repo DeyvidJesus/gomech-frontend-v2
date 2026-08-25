@@ -315,7 +315,7 @@ function CreateRoleModal({ allPermissions, onClose, onSuccess }: CreateRoleModal
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 animate-in fade-in">
-      <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl max-w-2xl w-full p-6 shadow-xl space-y-4 max-h-[90vh] flex flex-col">
+      <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl max-w-[680px] w-full p-6 shadow-xl space-y-4 max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between border-b border-outline-variant pb-3 shrink-0">
           <h3 className="font-headline-sm text-headline-sm font-bold text-on-surface flex items-center gap-2">
             <span className="material-symbols-outlined text-primary text-[22px]">add_moderator</span>

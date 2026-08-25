@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { inventoryApi } from '../api/inventoryApi';
 import type { UnitStock, MovementReason } from '../types';
 import { useAuthStore } from '@/features/iam/stores/authStore';
+import { toast } from '@/shared/utils/toast';
 
 export function StockList() {
   const queryClient = useQueryClient();
@@ -21,14 +22,14 @@ export function StockList() {
   // Fetch unit stocks
   const { data: stocks = [], isLoading: isLoadingStocks } = useQuery({
     queryKey: ['inventory', 'stocks', unitId],
-    queryFn: () => inventoryApi.getStocks(unitId).then((r) => r.data),
+    queryFn: () => inventoryApi.getStocks(unitId).then((r) => r.data).catch(() => []),
     enabled: Boolean(unitId),
   });
 
   // Fetch low stock alerts
   const { data: lowStockAlerts = [] } = useQuery({
     queryKey: ['inventory', 'low-stock', unitId],
-    queryFn: () => inventoryApi.getLowStockAlerts(unitId).then((r) => r.data),
+    queryFn: () => inventoryApi.getLowStockAlerts(unitId).then((r) => r.data).catch(() => []),
     enabled: Boolean(unitId),
   });
 
@@ -47,9 +48,12 @@ export function StockList() {
       setNewQuantity('');
       setAdjustNotes('');
       setAdjustError(null);
+      toast.success('Ajuste de estoque realizado com sucesso!');
     },
     onError: (err: any) => {
-      setAdjustError(err.response?.data?.detail || 'Erro ao ajustar estoque.');
+      const msg = err.response?.data?.detail || 'Erro ao ajustar estoque.';
+      setAdjustError(msg);
+      toast.error(msg);
     },
   });
 
@@ -85,7 +89,7 @@ export function StockList() {
   const totalAvailable = stocks.reduce((acc, s) => acc + (Number(s.availableStock) || 0), 0);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-12">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/60 shadow-sm">
         <div>
@@ -202,7 +206,7 @@ export function StockList() {
       {/* Search & Stock Table */}
       <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/60 shadow-sm overflow-hidden space-y-4 p-5">
         <div className="flex items-center justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
+          <div className="relative flex-1 max-w-[480px]">
             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant material-symbols-outlined text-[20px]">
               search
             </span>
@@ -317,7 +321,7 @@ export function StockList() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-surface-container-lowest w-full max-w-md rounded-2xl border border-outline-variant/60 shadow-xl overflow-hidden"
+              className="bg-surface-container-lowest w-full max-w-[480px] rounded-2xl border border-outline-variant/60 shadow-xl overflow-hidden"
             >
               <div className="p-5 border-b border-outline-variant/40 flex items-center justify-between">
                 <div className="flex items-center gap-2">

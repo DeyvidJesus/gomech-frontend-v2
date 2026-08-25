@@ -146,7 +146,7 @@ export function ProductForm({ productId }: ProductFormProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-16">
+    <div className="max-w-[960px] mx-auto space-y-6 pb-16">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

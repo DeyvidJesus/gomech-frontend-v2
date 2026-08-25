@@ -17,6 +17,7 @@ import { CheckoutModal } from './components/CheckoutModal';
 import { DelinquencyBanner } from './components/DelinquencyBanner';
 import { PlansPricingView } from './components/PlansPricingView';
 import { InvoicesList } from './components/InvoicesList';
+import { toast } from '@/shared/utils/toast';
 
 export const BillingDashboard: React.FC = () => {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -50,13 +51,43 @@ export const BillingDashboard: React.FC = () => {
 
   useEffect(() => {
     loadData();
+
+    // Check if returning from Pagar.me Hosted Checkout
+    const params = new URLSearchParams(window.location.search);
+    const statusParam = params.get('status');
+    if (statusParam === 'processing' || statusParam === 'success') {
+      // Clean URL parameter without reloading
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // Poll data to catch webhook activation
+      const interval = setInterval(() => {
+        billingApi.getSubscription().then((res) => {
+          setSubscription(res.data);
+          if (res.data.status === 'ACTIVE') {
+            clearInterval(interval);
+            toast.success('Assinatura ativada com sucesso!');
+          }
+        }).catch(() => {});
+      }, 3000);
+
+      const timeout = setTimeout(() => {
+        clearInterval(interval);
+      }, 18000);
+
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timeout);
+      };
+    } else if (statusParam === 'canceled') {
+      window.history.replaceState({}, document.title, window.location.pathname);
+      toast.info('O processo de checkout na Pagar.me foi cancelado.');
+    }
   }, []);
 
   const handleOpenCheckout = (plan?: BillingPlan) => {
     if (plan) {
       setSelectedPlanForCheckout(plan);
     } else {
-      // Pick current or Pro plan by default
       const current = plans.find((p) => p.code === subscription?.planCode) || plans.find((p) => p.code === 'PRO') || plans[0];
       setSelectedPlanForCheckout(current || null);
     }
@@ -67,28 +98,28 @@ export const BillingDashboard: React.FC = () => {
     switch (status) {
       case 'ACTIVE':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
             <CheckCircle2 className="w-3.5 h-3.5" />
             Assinatura Ativa
           </span>
         );
       case 'TRIALING':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
             <Sparkles className="w-3.5 h-3.5" />
             Período de Avaliação
           </span>
         );
       case 'PAST_DUE':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20 animate-pulse">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-error/10 text-error border border-error/20 animate-pulse">
             <AlertCircle className="w-3.5 h-3.5" />
             Pagamento Pendente
           </span>
         );
       case 'CANCELED':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-500/10 text-slate-400 border border-slate-500/20">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-surface-container text-on-surface-variant border border-outline-variant">
             Cancelada
           </span>
         );
@@ -100,8 +131,8 @@ export const BillingDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-3">
-        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-slate-400">Carregando painel de faturamento...</p>
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-on-surface-variant">Carregando painel de faturamento...</p>
       </div>
     );
   }
@@ -109,29 +140,29 @@ export const BillingDashboard: React.FC = () => {
   const isDelinquent = subscription?.status === 'PAST_DUE';
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-4 sm:p-6">
+    <div className="space-y-6 max-w-[1400px] mx-auto">
       {/* Top Banner if Delinquent */}
       {isDelinquent && <DelinquencyBanner onPayNow={() => handleOpenCheckout()} />}
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Faturamento e Assinatura</h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold text-on-surface tracking-tight font-headline-md">Faturamento e Assinatura</h1>
+          <p className="text-sm text-on-surface-variant mt-1">
             Gerencie o plano contratado, limites operacionais e histórico de pagamentos da sua oficina.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={loadData}
-            className="p-2 text-slate-400 hover:text-white rounded-xl bg-slate-900/60 border border-slate-800 hover:bg-slate-800 transition-colors"
+            className="p-2 text-on-surface-variant hover:text-on-surface rounded-xl bg-surface-container-lowest border border-outline-variant hover:bg-surface-container transition-colors"
             title="Atualizar dados"
           >
             <RotateCw className="w-4 h-4" />
           </button>
           <button
             onClick={() => handleOpenCheckout()}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/30 transition-all"
+            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-container text-on-primary rounded-xl text-xs font-semibold shadow-sm transition-all"
           >
             <Zap className="w-4 h-4" />
             <span>Fazer Upgrade / Renovar</span>
@@ -140,20 +171,20 @@ export const BillingDashboard: React.FC = () => {
       </div>
 
       {error && (
-        <div className="flex items-center gap-3 p-4 bg-red-950/40 border border-red-800/60 rounded-2xl text-xs text-red-300">
-          <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+        <div className="flex items-center gap-3 p-4 bg-error/10 border border-error/20 rounded-2xl text-xs text-error">
+          <AlertCircle className="w-4 h-4 text-error shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+      <div className="flex items-center gap-2 border-b border-outline-variant pb-2">
         <button
           onClick={() => setActiveTab('overview')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all ${
             activeTab === 'overview'
-              ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 shadow-sm'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+              ? 'bg-primary-fixed text-primary font-semibold shadow-xs'
+              : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
           }`}
         >
           <Layers className="w-4 h-4" />
@@ -164,8 +195,8 @@ export const BillingDashboard: React.FC = () => {
           onClick={() => setActiveTab('plans')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all ${
             activeTab === 'plans'
-              ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 shadow-sm'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+              ? 'bg-primary-fixed text-primary font-semibold shadow-xs'
+              : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
           }`}
         >
           <Sparkles className="w-4 h-4" />
@@ -176,8 +207,8 @@ export const BillingDashboard: React.FC = () => {
           onClick={() => setActiveTab('invoices')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all ${
             activeTab === 'invoices'
-              ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 shadow-sm'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+              ? 'bg-primary-fixed text-primary font-semibold shadow-xs'
+              : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
           }`}
         >
           <Receipt className="w-4 h-4" />
@@ -191,26 +222,26 @@ export const BillingDashboard: React.FC = () => {
           {/* Main Cards Row */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Current Plan Card */}
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 shadow-xl space-y-4">
+            <div className="p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant shadow-sm space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <span className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">
                   Plano Atual
                 </span>
                 {getStatusBadge(subscription?.status)}
               </div>
 
               <div>
-                <h3 className="text-2xl font-black text-white">{subscription?.planName || 'TRIAL'}</h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <h3 className="text-2xl font-bold text-on-surface">{subscription?.planName || 'TRIAL'}</h3>
+                <p className="text-xs text-on-surface-variant mt-0.5">
                   {subscription?.status === 'TRIALING'
                     ? 'Avaliação gratuita com todos os módulos'
                     : 'Assinatura mensal recorrente'}
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
-                <span className="text-slate-400">Próxima Renovação:</span>
-                <span className="font-semibold text-slate-200">
+              <div className="pt-3 border-t border-outline-variant flex items-center justify-between text-xs">
+                <span className="text-on-surface-variant">Próxima Renovação:</span>
+                <span className="font-semibold text-on-surface">
                   {subscription?.nextBillingDate
                     ? new Date(subscription.nextBillingDate).toLocaleDateString('pt-BR')
                     : '14 dias'}
@@ -219,16 +250,16 @@ export const BillingDashboard: React.FC = () => {
             </div>
 
             {/* Payment Method Card */}
-            <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-4">
+            <div className="p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant shadow-sm space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <span className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">
                   Forma de Pagamento
                 </span>
-                <CreditCard className="w-4 h-4 text-indigo-400" />
+                <CreditCard className="w-4 h-4 text-primary" />
               </div>
 
               <div>
-                <h3 className="text-lg font-bold text-white">
+                <h3 className="text-lg font-bold text-on-surface">
                   {subscription?.paymentMethod === 'CREDIT_CARD'
                     ? `Cartão de Crédito ${subscription.cardBrand || ''}`
                     : subscription?.paymentMethod === 'PIX'
@@ -237,17 +268,17 @@ export const BillingDashboard: React.FC = () => {
                     ? 'Boleto Bancário'
                     : 'Não configurado'}
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-on-surface-variant mt-0.5">
                   {subscription?.cardLastFour
                     ? `Final •••• ${subscription.cardLastFour}`
                     : 'Faturamento automático via Pagar.me'}
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
+              <div className="pt-3 border-t border-outline-variant flex items-center justify-between">
                 <button
                   onClick={() => handleOpenCheckout()}
-                  className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
+                  className="text-xs text-primary hover:underline font-semibold flex items-center gap-1"
                 >
                   <span>Alterar forma de pagamento</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
@@ -256,85 +287,85 @@ export const BillingDashboard: React.FC = () => {
             </div>
 
             {/* Delinquency & Security Status */}
-            <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-4">
+            <div className="p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant shadow-sm space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <span className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">
                   Status da Conta
                 </span>
                 {isDelinquent ? (
-                  <ShieldAlert className="w-4 h-4 text-red-400" />
+                  <ShieldAlert className="w-4 h-4 text-error" />
                 ) : (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 )}
               </div>
 
               <div>
-                <h3 className="text-lg font-bold text-white">
+                <h3 className="text-lg font-bold text-on-surface">
                   {isDelinquent ? 'Bloqueio Iminente' : '100% Regularizada'}
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-on-surface-variant mt-0.5">
                   {isDelinquent
                     ? 'Efetue o pagamento para evitar a revogação de acessos'
                     : 'Sem débitos pendentes no gateway'}
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+              <div className="pt-3 border-t border-outline-variant flex items-center justify-between text-xs text-on-surface-variant">
                 <span>Proteção de Sessão:</span>
-                <span className="text-emerald-400 font-medium">Ativa</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-medium">Ativa</span>
               </div>
             </div>
           </div>
 
           {/* Quota Usage Meters */}
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 shadow-xl space-y-4">
+          <div className="p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-white">Consumo de Cotas do Plano</h3>
-                <p className="text-xs text-slate-400">
+                <h3 className="text-sm font-semibold text-on-surface">Consumo de Cotas do Plano</h3>
+                <p className="text-xs text-on-surface-variant">
                   Acompanhe a utilização mensal dos recursos incluídos na sua assinatura.
                 </p>
               </div>
-              <span className="text-xs text-indigo-400 font-medium">Ciclo Mensal</span>
+              <span className="text-xs text-primary font-medium">Ciclo Mensal</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
-              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 space-y-2">
+              <div className="p-4 rounded-xl bg-surface border border-outline-variant space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Ordens de Serviço</span>
-                  <span className="font-semibold text-white">Ilimitado</span>
+                  <span className="text-on-surface-variant">Ordens de Serviço</span>
+                  <span className="font-semibold text-on-surface">Ilimitado</span>
                 </div>
-                <div className="w-full bg-slate-800 rounded-full h-1.5">
-                  <div className="bg-indigo-500 h-1.5 rounded-full" style={{ width: '45%' }} />
+                <div className="w-full bg-surface-container rounded-full h-1.5">
+                  <div className="bg-primary h-1.5 rounded-full" style={{ width: '45%' }} />
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 space-y-2">
+              <div className="p-4 rounded-xl bg-surface border border-outline-variant space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Mecânicos e Equipe</span>
-                  <span className="font-semibold text-white">Até 10</span>
+                  <span className="text-on-surface-variant">Mecânicos e Equipe</span>
+                  <span className="font-semibold text-on-surface">Até 10</span>
                 </div>
-                <div className="w-full bg-slate-800 rounded-full h-1.5">
+                <div className="w-full bg-surface-container rounded-full h-1.5">
                   <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: '30%' }} />
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 space-y-2">
+              <div className="p-4 rounded-xl bg-surface border border-outline-variant space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Itens em Estoque</span>
-                  <span className="font-semibold text-white">Ilimitado</span>
+                  <span className="text-on-surface-variant">Itens em Estoque</span>
+                  <span className="font-semibold text-on-surface">Ilimitado</span>
                 </div>
-                <div className="w-full bg-slate-800 rounded-full h-1.5">
+                <div className="w-full bg-surface-container rounded-full h-1.5">
                   <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: '20%' }} />
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 space-y-2">
+              <div className="p-4 rounded-xl bg-surface border border-outline-variant space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Créditos de IA GoMech</span>
-                  <span className="font-semibold text-white">500 / mês</span>
+                  <span className="text-on-surface-variant">Créditos de IA GoMech</span>
+                  <span className="font-semibold text-on-surface">500 / mês</span>
                 </div>
-                <div className="w-full bg-slate-800 rounded-full h-1.5">
+                <div className="w-full bg-surface-container rounded-full h-1.5">
                   <div className="bg-purple-500 h-1.5 rounded-full" style={{ width: '15%' }} />
                 </div>
               </div>
@@ -344,10 +375,10 @@ export const BillingDashboard: React.FC = () => {
           {/* Recent Invoices Preview */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-white">Últimas Faturas</h3>
+              <h3 className="text-sm font-semibold text-on-surface">Últimas Faturas</h3>
               <button
                 onClick={() => setActiveTab('invoices')}
-                className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
+                className="text-xs text-primary hover:underline font-semibold"
               >
                 Ver todas as faturas →
               </button>

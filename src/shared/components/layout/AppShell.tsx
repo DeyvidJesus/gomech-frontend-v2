@@ -18,7 +18,11 @@ export function AppShell({ children }: AppShellProps) {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [unitDropdownOpen, setUnitDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [supportModalOpen, setSupportModalOpen] = useState(false);
+
+  const unitDropdownRef = useRef<HTMLDivElement>(null);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
 
   // Fetch workshop units for active unit switcher
   const { data: unitsResponse, isLoading: isLoadingUnits } = useQuery({
@@ -62,11 +66,14 @@ export function AppShell({ children }: AppShellProps) {
     }
   };
 
-  // Close dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (unitDropdownRef.current && !unitDropdownRef.current.contains(event.target as Node)) {
         setUnitDropdownOpen(false);
+      }
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+        setUserDropdownOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -111,9 +118,19 @@ export function AppShell({ children }: AppShellProps) {
         {/* Brand Header */}
         <div className="flex items-center justify-between px-4 mb-lg">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container shadow-sm">
-              <span className="material-symbols-outlined icon-fill text-[20px] text-white">precision_manufacturing</span>
-            </div>
+            {activeUnit?.logoUrl ? (
+              <img
+                src={activeUnit.logoUrl}
+                alt={activeUnit.name || 'Logo'}
+                className="w-9 h-9 rounded-lg object-cover border border-outline-variant shadow-xs"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container shadow-sm">
+                <span className="material-symbols-outlined icon-fill text-[20px] text-white">
+                  precision_manufacturing
+                </span>
+              </div>
+            )}
             <div>
               <h1 className="text-headline-md font-headline-md font-bold text-primary leading-tight">GoMech</h1>
               <p className="font-label-sm text-label-sm text-on-surface-variant truncate max-w-[140px]">
@@ -167,10 +184,11 @@ export function AppShell({ children }: AppShellProps) {
         <div className="mt-auto pt-md border-t border-outline-variant flex flex-col gap-1">
           <button
             type="button"
+            onClick={() => setSupportModalOpen(true)}
             className="w-full flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors rounded-xl text-left"
           >
-            <span className="material-symbols-outlined text-[20px]">help_outline</span>
-            <span className="font-label-md text-label-md">Suporte</span>
+            <span className="material-symbols-outlined text-[20px] text-primary">help_outline</span>
+            <span className="font-label-md text-label-md font-medium">Suporte GoMech</span>
           </button>
           <button
             type="button"
@@ -178,7 +196,7 @@ export function AppShell({ children }: AppShellProps) {
             className="w-full flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-error hover:bg-error-container/30 transition-colors rounded-xl text-left"
           >
             <span className="material-symbols-outlined text-[20px]">logout</span>
-            <span className="font-label-md text-label-md">Sair</span>
+            <span className="font-label-md text-label-md font-medium">Sair</span>
           </button>
         </div>
       </nav>
@@ -211,7 +229,7 @@ export function AppShell({ children }: AppShellProps) {
 
           <div className="flex items-center gap-2 sm:gap-md">
             {/* ACTIVE UNIT SELECTOR (Dropdown) */}
-            <div className="relative" ref={dropdownRef}>
+            <div className="relative" ref={unitDropdownRef}>
               <button
                 type="button"
                 onClick={() => setUnitDropdownOpen(!unitDropdownOpen)}
@@ -290,16 +308,77 @@ export function AppShell({ children }: AppShellProps) {
 
             <div className="w-px h-6 bg-outline-variant mx-1 hidden sm:block"></div>
 
-            {/* Notifications */}
-            <button className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors">
-              <span className="material-symbols-outlined text-[20px]">notifications</span>
+            {/* Support Quick Link */}
+            <button
+              onClick={() => setSupportModalOpen(true)}
+              className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors"
+              title="Ajuda e Suporte"
+            >
+              <span className="material-symbols-outlined text-[20px]">help</span>
             </button>
 
-            {/* User Profile Avatar */}
-            <div className="flex items-center gap-2 pl-1">
-              <div className="w-8 h-8 rounded-full bg-primary-fixed border border-primary text-primary font-bold text-xs flex items-center justify-center">
+            {/* User Profile Avatar with Dropdown */}
+            <div className="relative pl-1" ref={userDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                className="w-9 h-9 rounded-full bg-primary-fixed border border-primary text-primary font-bold text-xs flex items-center justify-center hover:opacity-90 transition-opacity shadow-xs"
+              >
                 {user?.name ? user.name.slice(0, 2).toUpperCase() : 'GM'}
-              </div>
+              </button>
+
+              {userDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-4 py-2 border-b border-outline-variant/60">
+                    <p className="text-label-sm font-semibold text-on-surface truncate">{user?.name || 'Usuário'}</p>
+                    <p className="text-body-sm text-on-surface-variant text-[11px] truncate">{user?.email}</p>
+                  </div>
+                  <div className="py-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        navigate({ to: '/admin/profile' as string }).catch(() => {});
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2 text-left text-body-md text-on-surface hover:bg-surface-container transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[18px] text-primary">person</span>
+                      <span>Meu Perfil</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        navigate({ to: '/admin/company' as string }).catch(() => {});
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2 text-left text-body-md text-on-surface hover:bg-surface-container transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[18px] text-on-surface-variant">domain</span>
+                      <span>Empresa & Filiais</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        navigate({ to: '/billing' as string }).catch(() => {});
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2 text-left text-body-md text-on-surface hover:bg-surface-container transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[18px] text-on-surface-variant">credit_card</span>
+                      <span>Planos & Assinatura</span>
+                    </button>
+                    <div className="h-px bg-outline-variant/60 my-1"></div>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2.5 px-4 py-2 text-left text-body-md text-error hover:bg-error-container/30 transition-colors font-medium"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">logout</span>
+                      <span>Sair do Sistema</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </header>
@@ -319,6 +398,79 @@ export function AppShell({ children }: AppShellProps) {
           </AnimatePresence>
         </main>
       </div>
+
+      {/* Support Modal */}
+      {supportModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl max-w-[480px] w-full p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-outline-variant pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                  <span className="material-symbols-outlined text-[24px]">support_agent</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-on-surface">Central de Suporte GoMech</h3>
+                  <p className="text-xs text-on-surface-variant">Estamos prontos para te atender</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSupportModalOpen(false)}
+                className="text-on-surface-variant hover:text-on-surface p-1 rounded-lg"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <a
+                href={`https://wa.me/5511999999999?text=${encodeURIComponent(
+                  `Olá Suporte GoMech! Preciso de ajuda com a oficina ${activeUnit?.name || ''} (Usuário: ${user?.email || ''})`
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[24px] text-emerald-600">chat</span>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-xs text-on-surface">Suporte Direto via WhatsApp</h4>
+                  <p className="text-[11px] text-on-surface-variant">Atendimento em tempo real com nossos especialistas</p>
+                </div>
+                <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+              </a>
+
+              <a
+                href="mailto:suporte@gomech.com.br"
+                className="flex items-center gap-3 p-3.5 rounded-xl border border-outline-variant bg-surface hover:bg-surface-container transition-colors"
+              >
+                <span className="material-symbols-outlined text-[24px] text-primary">mail</span>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-xs text-on-surface">E-mail de Suporte</h4>
+                  <p className="text-[11px] text-on-surface-variant">suporte@gomech.com.br</p>
+                </div>
+                <span className="material-symbols-outlined text-[18px] text-on-surface-variant">arrow_forward</span>
+              </a>
+
+              <div className="p-3.5 rounded-xl border border-outline-variant bg-surface-container-low text-xs text-on-surface-variant space-y-1">
+                <div className="flex items-center gap-1.5 font-semibold text-on-surface">
+                  <span className="material-symbols-outlined text-[16px] text-emerald-600">check_circle</span>
+                  <span>Status do Sistema: 100% Operacional</span>
+                </div>
+                <p className="text-[11px]">Versão: GoMech Enterprise v2.4 (Build 2026.08)</p>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setSupportModalOpen(false)}
+                className="px-4 py-2 border border-outline-variant rounded-lg text-xs font-semibold text-on-surface hover:bg-surface-container"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -65,6 +65,7 @@ export interface Payment {
   gatewayOrderId?: string | null;
   gatewayChargeId?: string | null;
   gatewayPaymentId?: string | null;
+  gatewayPaymentLinkId?: string | null;
   pixQrCode?: string | null;
   pixQrCodeUrl?: string | null;
   pixCopyPaste?: string | null;
@@ -78,18 +79,18 @@ export interface Payment {
   createdAt: string;
 }
 
-export interface InitiatePaymentDto {
-  planCode?: string;
-  method: PaymentMethod;
-  cardNumber?: string;
-  cardHolderName?: string;
-  cardExpMonth?: number;
-  cardExpYear?: number;
-  cardCvv?: string;
-  cardToken?: string;
-  installments?: number;
-  customerDocument?: string;
-  customerPhone?: string;
+export interface CreateCheckoutDto {
+  planCode: string;
+  successUrl?: string;
+  cancelUrl?: string;
+}
+
+export interface CheckoutSessionResponse {
+  checkoutUrl: string;
+  planCode: string;
+  price: number;
+  paymentLinkId?: string;
+  paymentId?: string;
 }
 
 export interface ChangePlanDto {

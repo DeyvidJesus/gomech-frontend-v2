@@ -91,7 +91,7 @@ export function ToolTransferList() {
   const getUnitName = (id: string) => units.find((u) => u.id === id)?.name || id.substring(0, 8);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-16">
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-16">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/60 shadow-sm">
         <div>
@@ -99,10 +99,10 @@ export function ToolTransferList() {
             <span className="p-2 rounded-xl bg-primary/10 text-primary">
               <span className="material-symbols-outlined text-[24px]">swap_horiz</span>
             </span>
-            <h1 className="text-2xl font-bold font-headline-md text-on-surface">Transferências de Ferramentas</h1>
+            <h1 className="text-2xl font-bold font-headline-md text-on-surface">Transferências de Equipamentos</h1>
           </div>
           <p className="text-sm text-on-surface-variant mt-1">
-            Remessas e recebimentos de equipamentos especiais entre filiais da oficina
+            Controle a movimentação física e custódia de ferramentas entre matriz e filiais.
           </p>
         </div>
 
@@ -116,26 +116,26 @@ export function ToolTransferList() {
           </Link>
           <button
             onClick={() => setCreateModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold bg-primary text-on-primary hover:bg-primary-container transition-colors shadow-sm active:scale-95"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm bg-primary text-on-primary hover:bg-primary-container transition-colors shadow-sm"
           >
-            <span className="material-symbols-outlined text-[18px]">add</span>
-            Nova Remessa
+            <span className="material-symbols-outlined text-[20px]">add</span>
+            Nova Transferência
           </button>
         </div>
       </div>
 
-      {/* Transfers Table Card */}
-      <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/60 shadow-sm overflow-hidden">
+      {/* Main Table Card */}
+      <div className="bg-surface-container-lowest border border-outline-variant/60 rounded-2xl shadow-sm overflow-hidden">
         {isLoading ? (
-          <div className="py-20 flex flex-col items-center justify-center gap-3 text-on-surface-variant">
-            <span className="material-symbols-outlined animate-spin text-[32px] text-primary">progress_activity</span>
-            <p className="text-sm font-medium">Carregando transferências de ferramentas...</p>
+          <div className="py-20 text-center text-on-surface-variant flex flex-col items-center">
+            <span className="material-symbols-outlined animate-spin text-[32px] text-primary mb-2">progress_activity</span>
+            <p className="text-sm font-medium">Carregando transferências...</p>
           </div>
         ) : transfers.length === 0 ? (
           <div className="py-20 text-center text-on-surface-variant flex flex-col items-center">
             <span className="material-symbols-outlined text-[48px] text-on-surface-variant/40 mb-2">swap_horiz</span>
             <h3 className="text-lg font-semibold text-on-surface">Nenhuma transferência registrada</h3>
-            <p className="text-sm text-on-surface-variant mt-1 max-w-sm">
+            <p className="text-sm text-on-surface-variant mt-1 max-w-[380px]">
               Transfira equipamentos temporariamente para atender demandas em outras filiais.
             </p>
             <button
@@ -168,7 +168,7 @@ export function ToolTransferList() {
                     <tr key={t.id} className="hover:bg-surface-container-low/50 transition-colors">
                       <td className="py-3.5 px-5">
                         <div className="font-mono font-bold text-on-surface">{t.transferNumber}</div>
-                        {t.notes && <div className="text-xs text-on-surface-variant truncate max-w-xs">{t.notes}</div>}
+                        {t.notes && <div className="text-xs text-on-surface-variant truncate max-w-[320px]">{t.notes}</div>}
                       </td>
 
                       <td className="py-3.5 px-4">
@@ -280,7 +280,7 @@ export function ToolTransferList() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-surface-container-lowest w-full max-w-lg rounded-2xl border border-outline-variant/60 shadow-2xl overflow-hidden"
+              className="bg-surface-container-lowest w-full max-w-[540px] rounded-2xl border border-outline-variant/60 shadow-2xl overflow-hidden"
             >
               <div className="p-5 border-b border-outline-variant/40 flex items-center justify-between">
                 <div className="flex items-center gap-2">

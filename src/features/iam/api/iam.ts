@@ -5,6 +5,7 @@ export interface Unit {
   id: string;
   name: string;
   address?: string;
+  logoUrl?: string;
   isHeadquarters?: boolean;
   headquarters?: boolean;
   tenantId?: string;
@@ -76,11 +77,46 @@ export interface CreateUnitRequest {
   isHeadquarters?: boolean;
 }
 
+export interface UpdateUnitRequest {
+  name: string;
+  address?: string;
+  phone?: string;
+  logoUrl?: string;
+  technicalManager?: string;
+  isHeadquarters?: boolean;
+}
+
+export interface CompanyProfile {
+  id: string;
+  name: string;
+  tradeName?: string;
+  cnpj: string;
+  email?: string;
+  phone?: string;
+  logoUrl?: string;
+  address?: string;
+  status: string;
+}
+
+export interface UpdateCompanyProfileRequest {
+  name: string;
+  tradeName?: string;
+  email?: string;
+  phone?: string;
+  logoUrl?: string;
+  address?: string;
+}
+
 export const iamApi = {
   // Units
   units: () => api.get<Unit[]>('/units'),
   getUnitById: (id: string) => api.get<Unit>(`/units/${id}`),
   createUnit: (data: CreateUnitRequest) => api.post<Unit>('/units', data),
+  updateUnit: (id: string, data: UpdateUnitRequest) => api.put<Unit>(`/units/${id}`, data),
+
+  // Company Profile
+  getCompanyProfile: () => api.get<CompanyProfile>('/company/profile'),
+  updateCompanyProfile: (data: UpdateCompanyProfileRequest) => api.put<CompanyProfile>('/company/profile', data),
 
   // Users
   users: () => api.get<UserResponse[]>('/users'),
@@ -106,3 +142,4 @@ export const iamApi = {
       unitId,
     }),
 };
+

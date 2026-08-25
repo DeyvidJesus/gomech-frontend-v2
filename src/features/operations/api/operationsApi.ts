@@ -223,6 +223,20 @@ export const operationsApi = {
     return response.data;
   },
 
+  rejectQuoteInternally: async (id: string, reason?: string): Promise<QuoteResponse> => {
+    const response = await api.post<QuoteResponse>(`/quotes/${id}/reject`, null, {
+      params: reason ? { reason } : undefined,
+    });
+    return response.data;
+  },
+
+  requestQuoteRevision: async (id: string, notes?: string): Promise<QuoteResponse> => {
+    const response = await api.post<QuoteResponse>(`/quotes/${id}/request-revision`, null, {
+      params: notes ? { notes } : undefined,
+    });
+    return response.data;
+  },
+
   sendQuoteToCustomer: async (id: string): Promise<QuoteResponse> => {
     const response = await api.post<QuoteResponse>(`/quotes/${id}/send`);
     return response.data;
@@ -325,6 +339,23 @@ export const operationsApi = {
   getVehicleHistory: async (vehicleId: string): Promise<VehicleHistoryResponse> => {
     const response = await api.get<VehicleHistoryResponse>(
       `/operations/vehicles/${vehicleId}/history`
+    );
+    return response.data;
+  },
+
+  // Public Quote Portal (No authentication required)
+  getPublicQuote: async (id: string): Promise<import('../types').PublicQuoteResponse> => {
+    const response = await api.get<import('../types').PublicQuoteResponse>(`/public/quotes/${id}`);
+    return response.data;
+  },
+
+  processPublicDecision: async (
+    id: string,
+    data: { approved: boolean; signerName?: string; signatureData?: string; notes?: string }
+  ): Promise<import('../types').PublicQuoteResponse> => {
+    const response = await api.post<import('../types').PublicQuoteResponse>(
+      `/public/quotes/${id}/decision`,
+      data
     );
     return response.data;
   },

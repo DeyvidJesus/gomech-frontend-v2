@@ -6,14 +6,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { operationsApi } from '../api/operationsApi';
 import { crmApi } from '@/features/crm/api/crmApi';
+import { iamApi } from '@/features/iam/api/iam';
 import { useAuthStore } from '@/features/iam/stores/authStore';
 import { handleApiValidationErrors, getApiErrorMessage } from '@/shared/utils/formErrors';
 import { formatLicensePlate } from '@/features/crm/utils/validators';
+import { toast } from '@/shared/utils/toast';
 
 const appointmentSchema = z.object({
   customerId: z.string().min(1, 'Selecione o cliente'),
   vehicleId: z.string().min(1, 'Selecione o veículo do cliente'),
   serviceType: z.string().min(1, 'Informe o tipo de serviço'),
+  assignedUserId: z.string().optional(),
   scheduledDate: z.string().min(1, 'Selecione a data do agendamento'),
   scheduledTime: z.string().min(1, 'Selecione o horário'),
   durationHours: z.number().min(0.5, 'Duração mínima de 30 min'),
@@ -128,6 +131,12 @@ export function AppointmentForm() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Fetch workshop users/mechanics
+  const { data: users = [] } = useQuery({
+    queryKey: ['iam', 'users'],
+    queryFn: () => iamApi.users().then((r) => r.data),
+  });
+
   // Create Appointment Mutation
   const createMutation = useMutation({
     mutationFn: async (data: AppointmentFormData) => {
@@ -149,16 +158,20 @@ export function AppointmentForm() {
         estimatedEndAt: estimatedEnd,
         serviceType: data.serviceType,
         notes: data.notes?.trim() || undefined,
+        assignedUserId: data.assignedUserId || undefined,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['operations', 'appointments'] });
+      toast.success('Agendamento criado com sucesso!');
       navigate({ to: '/operations/scheduling/calendar' });
     },
     onError: (err) => {
       const handled = handleApiValidationErrors(err, setError);
       if (!handled) {
-        setServerError(getApiErrorMessage(err, 'Erro ao agendar serviço. Verifique os dados.'));
+        const msg = getApiErrorMessage(err, 'Erro ao agendar serviço. Verifique os dados.');
+        setServerError(msg);
+        toast.error(msg);
       }
     },
   });
@@ -169,7 +182,7 @@ export function AppointmentForm() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto py-4 animate-in fade-in duration-200">
+    <div className="max-w-[1200px] mx-auto py-4 animate-in fade-in duration-200">
       {/* Page Header */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 pb-4 border-b border-outline-variant">
         <div>
@@ -438,6 +451,25 @@ export function AppointmentForm() {
                 {errors.serviceType && (
                   <span className="text-[12px] text-error font-medium">{errors.serviceType.message}</span>
                 )}
+              </div>
+
+              {/* Responsible Collaborator / Mechanic */}
+              <div className="flex flex-col gap-1.5">
+                <label className="font-label-sm text-label-sm text-on-surface-variant font-medium flex items-center justify-between">
+                  <span>Mecânico / Consultor Responsável</span>
+                  <span className="text-[11px] text-on-surface-variant">Opcional</span>
+                </label>
+                <select
+                  {...register('assignedUserId')}
+                  className="h-11 px-3.5 bg-surface border border-outline-variant rounded-lg text-body-md font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">Não atribuído (Disponível para equipe)</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name} ({u.email})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Notes */}

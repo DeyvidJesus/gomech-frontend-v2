@@ -2,6 +2,11 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { operationsApi } from '../api/operationsApi';
+import { iamApi, type UserResponse } from '@/features/iam/api/iam';
+import { toolsApi } from '@/features/tools/api/toolsApi';
+import { inventoryApi } from '@/features/inventory/api/inventoryApi';
+import type { Product } from '@/features/inventory/types';
+import type { Tool } from '@/features/tools/types';
 import type {
   WorkOrderStatus,
   WorkOrderItemStatus,
@@ -9,7 +14,6 @@ import type {
   SaveWorkOrderItemRequest,
 } from '../types';
 import { formatLicensePlate } from '@/features/crm/utils/validators';
-import { getApiErrorMessage } from '@/shared/utils/formErrors';
 
 interface WorkOrderDetailProps {
   workOrderId: string;
@@ -19,9 +23,10 @@ export function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [completeModalOpen, setCompleteModalOpen] = useState(false);
   const [addItemModalOpen, setAddItemModalOpen] = useState(false);
   const [addItemType, setAddItemType] = useState<WorkOrderItemType>('SERVICE');
+  const [linkToolModalOpen, setLinkToolModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'SERVICES' | 'PARTS' | 'TOOLS' | 'TIMELINE'>('SERVICES');
 
   // Fetch Work Order Details
   const {
@@ -34,10 +39,41 @@ export function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
     queryFn: () => operationsApi.getWorkOrderById(workOrderId),
   });
 
+  // Fetch Team Users (for mechanic assignment)
+  const { data: users = [] } = useQuery({
+    queryKey: ['iam', 'users'],
+    queryFn: () => iamApi.users().then((r) => r.data),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // Fetch Tools currently linked to this Work Order
+  const { data: toolUsages = [], refetch: refetchTools } = useQuery({
+    queryKey: ['tools', 'usages', 'work-order', workOrderId],
+    queryFn: () => toolsApi.getUsagesByWorkOrder(workOrderId).then((r) => r.data),
+  });
+
+  // Fetch all tools (for linking modal)
+  const { data: allToolsResponse } = useQuery({
+    queryKey: ['tools', 'list'],
+    queryFn: () => toolsApi.getTools({ size: 100 }).then((r) => r.data),
+    enabled: linkToolModalOpen,
+  });
+  const allTools: Tool[] = allToolsResponse?.content || [];
+
   // Change Status Mutation
   const changeStatusMutation = useMutation({
     mutationFn: (newStatus: WorkOrderStatus) =>
       operationsApi.changeWorkOrderStatus(workOrderId, { status: newStatus }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['operations', 'work-order', workOrderId] });
+      queryClient.invalidateQueries({ queryKey: ['operations', 'work-orders'] });
+    },
+  });
+
+  // Update Work Order Header (e.g. Mechanic Assignment)
+  const updateWorkOrderMutation = useMutation({
+    mutationFn: (data: { mechanicUserId?: string }) =>
+      operationsApi.updateWorkOrder(workOrderId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['operations', 'work-order', workOrderId] });
       queryClient.invalidateQueries({ queryKey: ['operations', 'work-orders'] });
@@ -54,6 +90,28 @@ export function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
     },
   });
 
+  // Link Tool to Work Order
+  const linkToolMutation = useMutation({
+    mutationFn: (toolId: string) =>
+      toolsApi.recordUsage({
+        toolId,
+        workOrderId,
+        notes: `Vinculada à OS #${workOrder?.orderNumber || workOrderId.slice(0, 8)}`,
+      }),
+    onSuccess: () => {
+      refetchTools();
+      setLinkToolModalOpen(false);
+    },
+  });
+
+  // Release/Return Tool
+  const finishToolUsageMutation = useMutation({
+    mutationFn: (usageId: string) => toolsApi.finishUsage(usageId, 'Devolvida ao concluir etapa da OS'),
+    onSuccess: () => {
+      refetchTools();
+    },
+  });
+
   if (isLoading) {
     return (
       <div className="py-24 text-center text-on-surface-variant">
@@ -67,7 +125,7 @@ export function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
 
   if (isError || !workOrder) {
     return (
-      <div className="py-16 text-center text-error bg-surface-container-lowest rounded-2xl border border-outline-variant max-w-lg mx-auto">
+      <div className="py-16 text-center text-error bg-surface-container-lowest rounded-2xl border border-outline-variant max-w-[540px] mx-auto">
         <span className="material-symbols-outlined text-[48px]">error</span>
         <h2 className="font-headline-sm text-headline-sm font-bold text-on-surface mt-2">
           Ordem de Serviço não encontrada
@@ -139,6 +197,25 @@ export function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
     updateItemsMutation.mutate(updatedItems);
   };
 
+  const handleAddItem = (newItem: SaveWorkOrderItemRequest) => {
+    const currentItems: SaveWorkOrderItemRequest[] = (workOrder.items || []).map((i) => ({
+      id: i.id,
+      type: i.type,
+      productId: i.productId,
+      assignedMechanicId: i.assignedMechanicId,
+      name: i.name,
+      description: i.description,
+      status: i.status,
+      quantity: i.quantity,
+      unitPrice: i.unitPrice,
+      discountAmount: i.discountAmount,
+      taxRate: i.taxRate,
+    }));
+
+    updateItemsMutation.mutate([...currentItems, newItem]);
+    setAddItemModalOpen(false);
+  };
+
   const getStatusBadge = (status: WorkOrderStatus) => {
     switch (status) {
       case 'OPEN':
@@ -150,7 +227,7 @@ export function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
       case 'WAITING_CUSTOMER':
         return { label: 'Aguardando Cliente', bg: 'bg-surface-variant text-on-surface-variant border-outline-variant' };
       case 'COMPLETED':
-        return { label: 'Finalizada', bg: 'bg-tertiary-fixed text-on-tertiary-fixed border-[#4ae176]' };
+        return { label: 'Finalizada', bg: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30' };
       case 'CANCELED':
         return { label: 'Cancelada', bg: 'bg-error-container text-on-error-container border-error/20' };
       default:
@@ -161,7 +238,7 @@ export function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
   const badge = getStatusBadge(workOrder.status);
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto py-2 animate-in fade-in duration-200">
+    <div className="flex flex-col gap-6 max-w-[1400px] mx-auto py-2 animate-in fade-in duration-200">
       {/* Top Header */}
       <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-outline-variant">
         <div>
@@ -182,193 +259,177 @@ export function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
 
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="font-headline-lg text-headline-lg font-bold text-on-surface">
-              Ordem de Serviço {workOrder.orderNumber || `#OS-${workOrder.id.slice(0, 8).toUpperCase()}`}
+              {workOrder.vehicleBrand} {workOrder.vehicleModel}{' '}
+              <span className="font-mono text-primary font-bold">
+                ({formatLicensePlate(workOrder.licensePlate)})
+              </span>
             </h1>
-            <span className={`px-3 py-1 rounded-full font-label-sm text-[11px] font-bold border ${badge.bg}`}>
+            <span
+              className={`px-3 py-1 rounded-full font-label-sm text-[12px] font-bold border ${badge.bg}`}
+            >
               {badge.label}
             </span>
           </div>
-
-          <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-            Cliente: <span className="font-semibold text-on-surface">{workOrder.customerName}</span> •
-            Veículo:{' '}
-            <span className="font-semibold text-on-surface">
-              {workOrder.vehicleBrand} {workOrder.vehicleModel}
-            </span>{' '}
-            • Placa:{' '}
-            <span className="font-mono font-bold text-primary">
-              {formatLicensePlate(workOrder.licensePlate)}
-            </span>
-            {workOrder.serviceBay && (
-              <>
-                {' '}
-                • Box:{' '}
-                <span className="font-mono font-bold text-on-surface">{workOrder.serviceBay}</span>
-              </>
-            )}
-          </p>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex flex-wrap items-center gap-2">
-          {!isCompleted && !isCanceled && (
-            <>
-              {/* Quick Status Buttons */}
-              {workOrder.status !== 'IN_PROGRESS' && (
-                <button
-                  type="button"
-                  onClick={() => changeStatusMutation.mutate('IN_PROGRESS')}
-                  disabled={changeStatusMutation.isPending}
-                  className="px-3.5 py-2 bg-surface border border-outline-variant text-primary hover:bg-surface-container rounded-lg font-label-md text-label-md font-semibold transition-colors flex items-center gap-1.5"
-                >
-                  <span className="material-symbols-outlined text-[18px]">play_arrow</span>
-                  Iniciar Reparo
-                </button>
-              )}
-
-              {workOrder.status !== 'WAITING_PARTS' && (
-                <button
-                  type="button"
-                  onClick={() => changeStatusMutation.mutate('WAITING_PARTS')}
-                  disabled={changeStatusMutation.isPending}
-                  className="px-3.5 py-2 bg-surface border border-outline-variant text-error hover:bg-surface-container rounded-lg font-label-md text-label-md font-semibold transition-colors flex items-center gap-1.5"
-                >
-                  <span className="material-symbols-outlined text-[18px]">pause</span>
-                  Aguardar Peças
-                </button>
-              )}
-
-              {workOrder.status !== 'WAITING_CUSTOMER' && (
-                <button
-                  type="button"
-                  onClick={() => changeStatusMutation.mutate('WAITING_CUSTOMER')}
-                  disabled={changeStatusMutation.isPending}
-                  className="px-3.5 py-2 bg-surface border border-outline-variant text-on-surface-variant hover:bg-surface-container rounded-lg font-label-md text-label-md font-semibold transition-colors flex items-center gap-1.5"
-                >
-                  <span className="material-symbols-outlined text-[18px]">schedule</span>
-                  Aguardar Cliente
-                </button>
-              )}
-
-              {/* Complete Work Order */}
-              <button
-                type="button"
-                onClick={() => setCompleteModalOpen(true)}
-                className="px-5 py-2 bg-primary text-on-primary font-label-md text-label-md font-bold rounded-lg hover:bg-primary-container transition-all shadow-sm flex items-center gap-1.5"
+        {/* Action Buttons & Mechanic Selector */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Mechanic Assignment Dropdown */}
+          <div className="flex items-center gap-2 bg-surface-container-lowest border border-outline-variant px-3 py-1.5 rounded-xl shadow-xs">
+            <span className="material-symbols-outlined text-primary text-[20px]">engineering</span>
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase font-bold text-on-surface-variant">Mecânico Líder</span>
+              <select
+                disabled={isCompleted || isCanceled}
+                value={workOrder.mechanicUserId || ''}
+                onChange={(e) => updateWorkOrderMutation.mutate({ mechanicUserId: e.target.value || undefined })}
+                className="bg-transparent font-semibold text-xs text-on-surface outline-none cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                Finalizar Ordem de Serviço
-              </button>
-            </>
+                <option value="">Nenhum atribuído</option>
+                {users.map((u: UserResponse) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name} ({u.roles?.[0]?.roleName || 'Equipe'})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Transition Buttons */}
+          {workOrder.status === 'OPEN' && (
+            <button
+              type="button"
+              onClick={() => changeStatusMutation.mutate('IN_PROGRESS')}
+              disabled={changeStatusMutation.isPending}
+              className="px-4 py-2 bg-primary text-on-primary rounded-xl font-label-md text-label-md font-bold hover:bg-primary-container transition-all shadow-sm flex items-center gap-1.5"
+            >
+              <span className="material-symbols-outlined text-[18px]">play_arrow</span>
+              Iniciar Execução
+            </button>
           )}
 
-          {isCompleted && (
-            <span className="px-4 py-2 bg-tertiary/15 text-tertiary font-label-md text-label-md font-bold rounded-lg flex items-center gap-2 border border-tertiary/30">
-              <span className="material-symbols-outlined text-[20px]">verified</span>
-              OS Finalizada em{' '}
-              {workOrder.completedAt
-                ? new Date(workOrder.completedAt).toLocaleDateString('pt-BR')
-                : 'Data registrada'}
-            </span>
+          {workOrder.status === 'IN_PROGRESS' && (
+            <button
+              type="button"
+              onClick={() => changeStatusMutation.mutate('COMPLETED')}
+              disabled={changeStatusMutation.isPending}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-label-md text-label-md font-bold transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+            >
+              <span className="material-symbols-outlined text-[18px]">check_circle</span>
+              Finalizar Ordem
+            </button>
+          )}
+
+          {!isCompleted && !isCanceled && (
+            <button
+              type="button"
+              onClick={() => {
+                setAddItemType('PART');
+                setAddItemModalOpen(true);
+              }}
+              className="px-4 py-2 bg-surface-container border border-outline-variant text-on-surface rounded-xl font-label-md text-label-md font-bold hover:bg-surface-bright transition-all shadow-xs flex items-center gap-1.5"
+            >
+              <span className="material-symbols-outlined text-[18px]">add_shopping_cart</span>
+              Adicionar Peça do Estoque
+            </button>
           )}
         </div>
       </header>
 
-      {/* 3-Column Layout: Left (Services Checklist), Middle (Parts Used), Right (Vehicle & Diagnostics) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Column 1: Task Checklist (Span 4) */}
-        <div className="lg:col-span-4 flex flex-col gap-4">
-          <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 shadow-xs flex flex-col gap-3">
-            <div className="flex items-center justify-between pb-2 border-b border-outline-variant">
-              <h2 className="font-label-md text-label-md font-bold text-on-surface uppercase tracking-wider">
-                Checklist de Serviços
-              </h2>
-              <span className="font-label-sm text-label-sm font-bold text-primary font-mono">
-                {completedServices} / {services.length} Concluídos
-              </span>
-            </div>
+      {/* KPI & Summary Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 shadow-xs">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Cliente</span>
+          <p className="font-bold text-sm text-on-surface mt-1">{workOrder.customerName}</p>
+          <p className="text-xs text-on-surface-variant font-mono">{workOrder.customerPhone || 'Sem telefone'}</p>
+        </div>
 
-            <div className="space-y-2">
-              {services.length === 0 ? (
-                <div className="py-8 text-center text-on-surface-variant">
-                  <span className="material-symbols-outlined text-[28px] text-outline">task</span>
-                  <p className="text-body-sm font-medium mt-1">Nenhum serviço registrado.</p>
-                </div>
-              ) : (
-                services.map((item) => {
-                  const isItemDone = item.status === 'COMPLETED';
-                  const isItemInProgress = item.status === 'IN_PROGRESS';
+        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 shadow-xs">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Progresso dos Serviços</span>
+          <div className="flex items-center justify-between mt-1">
+            <span className="font-bold text-sm text-on-surface">{completedServices} de {services.length} concluídos</span>
+            <span className="text-xs font-bold text-primary">
+              {services.length > 0 ? Math.round((completedServices / services.length) * 100) : 0}%
+            </span>
+          </div>
+          <div className="w-full bg-surface-container rounded-full h-1.5 mt-2">
+            <div
+              className="bg-primary h-1.5 rounded-full transition-all duration-300"
+              style={{ width: `${services.length > 0 ? (completedServices / services.length) * 100 : 0}%` }}
+            />
+          </div>
+        </div>
 
-                  return (
-                    <div
-                      key={item.id}
-                      onClick={() => handleToggleItemStatus(item.id)}
-                      className={`p-3 rounded-lg border transition-all cursor-pointer flex items-start gap-3 ${
-                        isItemDone
-                          ? 'bg-surface border-outline-variant/60 opacity-80'
-                          : isItemInProgress
-                          ? 'bg-primary-container/10 border-primary-container/40'
-                          : 'bg-surface-container-low border-outline-variant hover:bg-surface-container'
-                      }`}
-                    >
-                      <button
-                        type="button"
-                        disabled={isCompleted || isCanceled}
-                        className="mt-0.5 text-primary focus:outline-none"
-                      >
-                        <span className="material-symbols-outlined text-[22px]">
-                          {isItemDone
-                            ? 'check_box'
-                            : isItemInProgress
-                            ? 'indeterminate_check_box'
-                            : 'check_box_outline_blank'}
-                        </span>
-                      </button>
+        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 shadow-xs">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Ferramentas Vinculadas</span>
+          <div className="flex items-center justify-between mt-1">
+            <span className="font-bold text-sm text-on-surface">{toolUsages.filter((t) => !t.checkedInAt).length} em uso</span>
+            <button
+              onClick={() => {
+                setActiveTab('TOOLS');
+                setLinkToolModalOpen(true);
+              }}
+              className="text-xs text-primary font-bold hover:underline"
+            >
+              + Vincular
+            </button>
+          </div>
+          <p className="text-xs text-on-surface-variant mt-1">Rastreamento de ferramentas ativas</p>
+        </div>
 
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className={`font-medium text-body-md text-on-surface leading-tight ${
-                            isItemDone ? 'line-through opacity-70' : ''
-                          }`}
-                        >
-                          {item.name}
-                        </p>
-                        {item.description && (
-                          <p className="text-[11px] text-on-surface-variant mt-0.5">
-                            {item.description}
-                          </p>
-                        )}
-                        <div className="flex items-center justify-between text-[11px] text-on-surface-variant mt-1.5 pt-1 border-t border-outline-variant/40">
-                          <span className="font-mono">
-                            Qtd: {item.quantity}h •{' '}
-                            {(item.totalAmount || 0).toLocaleString('pt-BR', {
-                              style: 'currency',
-                              currency: 'BRL',
-                            })}
-                          </span>
-                          <span
-                            className={`font-bold ${
-                              isItemDone
-                                ? 'text-tertiary'
-                                : isItemInProgress
-                                ? 'text-primary'
-                                : 'text-on-surface-variant'
-                            }`}
-                          >
-                            {isItemDone
-                              ? 'Concluído'
-                              : isItemInProgress
-                              ? 'Em Andamento'
-                              : 'Pendente'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+        <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 shadow-xs">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant">Valor Total da OS</span>
+          <p className="font-bold text-xl text-primary mt-1">
+            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(workOrder.totalAmount || 0)}
+          </p>
+          <span className="text-[10px] text-on-surface-variant">Peças + Mão de obra</span>
+        </div>
+      </div>
 
+      {/* Navigation Tabs */}
+      <div className="flex items-center gap-2 border-b border-outline-variant pb-2">
+        <button
+          onClick={() => setActiveTab('SERVICES')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all ${
+            activeTab === 'SERVICES'
+              ? 'bg-primary-fixed text-primary font-bold shadow-xs'
+              : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+          }`}
+        >
+          <span className="material-symbols-outlined text-[18px]">build</span>
+          <span>Mão de Obra & Serviços ({services.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('PARTS')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all ${
+            activeTab === 'PARTS'
+              ? 'bg-primary-fixed text-primary font-bold shadow-xs'
+              : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+          }`}
+        >
+          <span className="material-symbols-outlined text-[18px]">inventory_2</span>
+          <span>Peças do Estoque ({parts.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('TOOLS')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all ${
+            activeTab === 'TOOLS'
+              ? 'bg-primary-fixed text-primary font-bold shadow-xs'
+              : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+          }`}
+        >
+          <span className="material-symbols-outlined text-[18px]">construction</span>
+          <span>Ferramentas em Uso ({toolUsages.length})</span>
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'SERVICES' && (
+        <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-base text-on-surface">Checklist de Serviços</h3>
             {!isCompleted && !isCanceled && (
               <button
                 type="button"
@@ -376,380 +437,247 @@ export function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
                   setAddItemType('SERVICE');
                   setAddItemModalOpen(true);
                 }}
-                className="w-full py-2 border border-dashed border-outline-variant rounded-lg text-on-surface-variant hover:text-primary hover:border-primary font-label-sm text-label-sm font-semibold transition-colors flex items-center justify-center gap-1.5"
+                className="px-3 py-1.5 bg-primary text-on-primary rounded-lg text-xs font-bold hover:bg-primary-container transition-colors flex items-center gap-1"
               >
                 <span className="material-symbols-outlined text-[16px]">add</span>
-                Adicionar Serviço
+                Novo Serviço
               </button>
             )}
-          </section>
-        </div>
+          </div>
 
-        {/* Column 2: Parts & Materials Used (Span 5) */}
-        <div className="lg:col-span-5 flex flex-col gap-4">
-          <section className="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-xs flex flex-col">
-            <div className="p-4 bg-surface border-b border-outline-variant flex items-center justify-between">
-              <h2 className="font-label-md text-label-md font-bold text-on-surface uppercase tracking-wider">
-                Peças & Materiais ({parts.length})
-              </h2>
-              {!isCompleted && !isCanceled && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAddItemType('PART');
-                    setAddItemModalOpen(true);
-                  }}
-                  className="px-2.5 py-1 text-primary hover:bg-surface-container rounded-lg font-label-sm text-label-sm font-semibold transition-colors flex items-center gap-1 border border-outline-variant"
+          <div className="space-y-2">
+            {services.length === 0 ? (
+              <p className="text-sm text-on-surface-variant text-center py-6">Nenhum serviço registrado.</p>
+            ) : (
+              services.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between p-3.5 rounded-xl border border-outline-variant bg-surface hover:bg-surface-bright transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[16px]">add</span>
-                  Adicionar Peça
-                </button>
-              )}
-            </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      disabled={isCompleted || isCanceled}
+                      onClick={() => handleToggleItemStatus(item.id)}
+                      className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-colors ${
+                        item.status === 'COMPLETED'
+                          ? 'bg-emerald-600 border-emerald-600 text-white'
+                          : item.status === 'IN_PROGRESS'
+                          ? 'bg-primary border-primary text-white'
+                          : 'border-outline text-transparent'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[16px]">check</span>
+                    </button>
+                    <div>
+                      <p className={`font-semibold text-sm ${item.status === 'COMPLETED' ? 'line-through text-on-surface-variant' : 'text-on-surface'}`}>
+                        {item.name}
+                      </p>
+                      <p className="text-xs text-on-surface-variant">{item.description || 'Sem observações adicionais'}</p>
+                    </div>
+                  </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[380px]">
-                <thead className="bg-surface-container-low font-label-sm text-label-sm text-on-surface-variant uppercase border-b border-outline-variant">
-                  <tr>
-                    <th className="py-2.5 px-3">Item / Peça</th>
-                    <th className="py-2.5 px-2 text-right w-16">Qtd</th>
-                    <th className="py-2.5 px-2 text-right w-24">Unit.</th>
-                    <th className="py-2.5 px-3 text-right w-24">Total</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-outline-variant text-body-sm">
-                  {parts.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="py-8 text-center text-on-surface-variant">
-                        <span className="material-symbols-outlined text-[28px] text-outline">
-                          build
-                        </span>
-                        <p className="text-body-sm font-medium mt-1">Nenhuma peça utilizada.</p>
-                      </td>
-                    </tr>
-                  ) : (
-                    parts.map((p) => (
-                      <tr key={p.id} className="hover:bg-surface-bright transition-colors">
-                        <td className="py-2.5 px-3 font-medium text-on-surface">
-                          <div>{p.name}</div>
-                          {p.description && (
-                            <div className="text-[10px] text-on-surface-variant">{p.description}</div>
-                          )}
-                        </td>
-                        <td className="py-2.5 px-2 text-right font-mono">{p.quantity}</td>
-                        <td className="py-2.5 px-2 text-right font-mono">
-                          {(p.unitPrice || 0).toLocaleString('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL',
-                          })}
-                        </td>
-                        <td className="py-2.5 px-3 text-right font-mono font-bold text-on-surface">
-                          {(p.totalAmount || 0).toLocaleString('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL',
-                          })}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Financial Totals in Middle Column */}
-            <div className="p-4 border-t border-outline-variant bg-surface-container-low flex flex-col gap-2 text-body-sm">
-              <div className="flex justify-between items-center text-on-surface-variant">
-                <span>Subtotal Peças</span>
-                <span className="font-medium text-on-surface">
-                  {(workOrder.totalPartsAmount || 0).toLocaleString('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                  })}
-                </span>
-              </div>
-              <div className="flex justify-between items-center text-on-surface-variant">
-                <span>Subtotal Serviços</span>
-                <span className="font-medium text-on-surface">
-                  {(workOrder.totalServicesAmount || 0).toLocaleString('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                  })}
-                </span>
-              </div>
-              {workOrder.discountAmount > 0 && (
-                <div className="flex justify-between items-center text-error">
-                  <span>Desconto</span>
-                  <span>
-                    -
-                    {workOrder.discountAmount.toLocaleString('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    })}
-                  </span>
+                  <div className="text-right">
+                    <span className="font-bold text-sm text-on-surface">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.totalAmount || 0)}
+                    </span>
+                    <span className="block text-[11px] text-on-surface-variant">{item.quantity}h / un</span>
+                  </div>
                 </div>
-              )}
-              <div className="h-px bg-outline-variant my-1"></div>
-              <div className="flex justify-between items-center">
-                <span className="font-headline-sm text-headline-sm font-bold text-on-surface">
-                  Total Geral
-                </span>
-                <span className="font-headline-sm text-headline-sm font-bold text-primary font-mono">
-                  {(workOrder.totalAmount || 0).toLocaleString('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                  })}
-                </span>
-              </div>
-            </div>
-          </section>
+              ))
+            )}
+          </div>
         </div>
-
-        {/* Column 3: Vehicle, Customer & Diagnostics (Span 3) */}
-        <div className="lg:col-span-3 flex flex-col gap-4">
-          {/* Vehicle Card */}
-          <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 shadow-xs space-y-3">
-            <div className="flex items-center gap-2 pb-2 border-b border-outline-variant">
-              <span className="material-symbols-outlined text-primary text-[20px]">directions_car</span>
-              <h3 className="font-label-md text-label-md font-bold text-on-surface uppercase">
-                Veículo & Cliente
-              </h3>
-            </div>
-
-            <div>
-              <p className="font-bold text-on-surface text-body-md">
-                {workOrder.vehicleBrand} {workOrder.vehicleModel}
-              </p>
-              <p className="text-[12px] text-on-surface-variant">
-                Ano: {workOrder.vehicleYear || 'N/A'} • Odômetro:{' '}
-                {workOrder.startMileage ? `${workOrder.startMileage.toLocaleString('pt-BR')} km` : 'N/A'}
-              </p>
-              <p className="font-mono font-bold text-primary text-[12px] mt-1">
-                Placa: {formatLicensePlate(workOrder.licensePlate)}
-              </p>
-            </div>
-
-            <div className="pt-2 border-t border-outline-variant">
-              <p className="font-semibold text-on-surface text-body-sm">{workOrder.customerName}</p>
-              {workOrder.customerPhone && (
-                <p className="text-[12px] text-on-surface-variant flex items-center gap-1 mt-0.5">
-                  <span className="material-symbols-outlined text-[14px]">phone</span>
-                  {workOrder.customerPhone}
-                </p>
-              )}
-            </div>
-          </section>
-
-          {/* Technical & Diagnosis Notes */}
-          <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 shadow-xs space-y-3">
-            <div className="flex items-center gap-2 pb-2 border-b border-outline-variant">
-              <span className="material-symbols-outlined text-primary text-[20px]">description</span>
-              <h3 className="font-label-md text-label-md font-bold text-on-surface uppercase">
-                Notas Técnicas
-              </h3>
-            </div>
-
-            {workOrder.diagnosisNotes && (
-              <div>
-                <span className="text-[10px] font-bold text-on-surface-variant uppercase block">
-                  Diagnóstico Inicial
-                </span>
-                <p className="text-body-sm text-on-surface mt-0.5 leading-relaxed bg-surface p-2.5 rounded-lg border border-outline-variant">
-                  {workOrder.diagnosisNotes}
-                </p>
-              </div>
-            )}
-
-            {workOrder.technicalNotes && (
-              <div>
-                <span className="text-[10px] font-bold text-on-surface-variant uppercase block">
-                  Parecer Técnico
-                </span>
-                <p className="text-body-sm text-on-surface mt-0.5 leading-relaxed bg-surface p-2.5 rounded-lg border border-outline-variant">
-                  {workOrder.technicalNotes}
-                </p>
-              </div>
-            )}
-
-            {!workOrder.diagnosisNotes && !workOrder.technicalNotes && (
-              <p className="text-[12px] text-on-surface-variant italic">
-                Nenhuma nota técnica registrada.
-              </p>
-            )}
-          </section>
-        </div>
-      </div>
-
-      {/* Complete Work Order Modal */}
-      {completeModalOpen && (
-        <CompleteWorkOrderModal
-          workOrderId={workOrderId}
-          currentMileage={workOrder.startMileage}
-          onClose={() => setCompleteModalOpen(false)}
-          onSuccess={() => {
-            queryClient.invalidateQueries({ queryKey: ['operations', 'work-order', workOrderId] });
-            queryClient.invalidateQueries({ queryKey: ['operations', 'work-orders'] });
-            setCompleteModalOpen(false);
-          }}
-        />
       )}
 
-      {/* Add Item Modal */}
+      {activeTab === 'PARTS' && (
+        <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-base text-on-surface">Peças e Materiais Aplicados</h3>
+              <p className="text-xs text-on-surface-variant">Itens vinculados serão baixados automaticamente do estoque ao concluir a OS</p>
+            </div>
+            {!isCompleted && !isCanceled && (
+              <button
+                type="button"
+                onClick={() => {
+                  setAddItemType('PART');
+                  setAddItemModalOpen(true);
+                }}
+                className="px-3 py-1.5 bg-primary text-on-primary rounded-lg text-xs font-bold hover:bg-primary-container transition-colors flex items-center gap-1"
+              >
+                <span className="material-symbols-outlined text-[16px]">add</span>
+                Adicionar Peça do Estoque
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            {parts.length === 0 ? (
+              <p className="text-sm text-on-surface-variant text-center py-6">Nenhuma peça adicionada nesta OS.</p>
+            ) : (
+              parts.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between p-3.5 rounded-xl border border-outline-variant bg-surface hover:bg-surface-bright transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                      <span className="material-symbols-outlined text-[20px]">inventory_2</span>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-sm text-on-surface">{item.name}</p>
+                        {item.productId ? (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
+                            Estoque Vinculado
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-surface-container text-on-surface-variant">
+                            Avulso
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-on-surface-variant">{item.description || 'Item aplicado ao veículo'}</p>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="font-bold text-sm text-on-surface">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.totalAmount || 0)}
+                    </span>
+                    <span className="block text-[11px] text-on-surface-variant">{item.quantity} un x {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.unitPrice || 0)}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'TOOLS' && (
+        <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-base text-on-surface">Ferramentas e Equipamentos em Custódia</h3>
+              <p className="text-xs text-on-surface-variant">Ferramentas especiais e scanners alocados para a realização desta OS</p>
+            </div>
+            {!isCompleted && !isCanceled && (
+              <button
+                type="button"
+                onClick={() => setLinkToolModalOpen(true)}
+                className="px-3 py-1.5 bg-primary text-on-primary rounded-lg text-xs font-bold hover:bg-primary-container transition-colors flex items-center gap-1"
+              >
+                <span className="material-symbols-outlined text-[16px]">add</span>
+                Vincular Ferramenta
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            {toolUsages.length === 0 ? (
+              <p className="text-sm text-on-surface-variant text-center py-6">Nenhuma ferramenta vinculada no momento.</p>
+            ) : (
+              toolUsages.map((usage) => (
+                <div
+                  key={usage.id}
+                  className="flex items-center justify-between p-3.5 rounded-xl border border-outline-variant bg-surface hover:bg-surface-bright transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600">
+                      <span className="material-symbols-outlined text-[20px]">construction</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm text-on-surface">{usage.toolName || 'Ferramenta'}</p>
+                      <p className="text-xs text-on-surface-variant">
+                        Início do uso: {usage.checkedOutAt ? new Date(usage.checkedOutAt).toLocaleString('pt-BR') : '-'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    {usage.checkedInAt ? (
+                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-container text-on-surface-variant">
+                        Devolvida
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => finishToolUsageMutation.mutate(usage.id)}
+                        disabled={finishToolUsageMutation.isPending}
+                        className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition-colors"
+                      >
+                        Encerrar Uso / Devolver
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Add Item Modal with Inventory Autocomplete */}
       {addItemModalOpen && (
         <AddWorkOrderItemModal
           initialType={addItemType}
           onClose={() => setAddItemModalOpen(false)}
-          onAdd={(newItem) => {
-            const currentItems: SaveWorkOrderItemRequest[] = (workOrder.items || []).map((i) => ({
-              id: i.id,
-              type: i.type,
-              productId: i.productId,
-              assignedMechanicId: i.assignedMechanicId,
-              name: i.name,
-              description: i.description,
-              status: i.status,
-              quantity: i.quantity,
-              unitPrice: i.unitPrice,
-              discountAmount: i.discountAmount,
-              taxRate: i.taxRate,
-            }));
-
-            updateItemsMutation.mutate([...currentItems, newItem]);
-            setAddItemModalOpen(false);
-          }}
+          onAdd={handleAddItem}
         />
+      )}
+
+      {/* Link Tool Modal */}
+      {linkToolModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl max-w-[480px] w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-outline-variant pb-3">
+              <h3 className="font-bold text-base text-on-surface">Vincular Ferramenta à OS</h3>
+              <button onClick={() => setLinkToolModalOpen(false)} className="text-on-surface-variant hover:text-on-surface">
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            <div className="max-h-60 overflow-y-auto space-y-2">
+              {allTools.length === 0 ? (
+                <p className="text-sm text-on-surface-variant text-center py-4">Nenhuma ferramenta disponível cadastrada.</p>
+              ) : (
+                allTools.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => linkToolMutation.mutate(t.id)}
+                    disabled={linkToolMutation.isPending}
+                    className="w-full flex items-center justify-between p-3 rounded-xl border border-outline-variant bg-surface hover:bg-surface-container text-left transition-colors"
+                  >
+                    <div>
+                      <p className="font-semibold text-xs text-on-surface">{t.name}</p>
+                      <p className="text-[11px] text-on-surface-variant font-mono">Patrimônio: {t.assetTag || t.serialNumber || '-'}</p>
+                    </div>
+                    <span className="material-symbols-outlined text-[18px] text-primary">add</span>
+                  </button>
+                ))
+              )}
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setLinkToolModalOpen(false)}
+                className="px-4 py-2 border border-outline-variant rounded-lg text-xs font-semibold text-on-surface hover:bg-surface-container"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
 // -------------------------------------------------------------
-// Component: CompleteWorkOrderModal
-// -------------------------------------------------------------
-interface CompleteWorkOrderModalProps {
-  workOrderId: string;
-  currentMileage?: number;
-  onClose: () => void;
-  onSuccess: () => void;
-}
-
-function CompleteWorkOrderModal({
-  workOrderId,
-  currentMileage,
-  onClose,
-  onSuccess,
-}: CompleteWorkOrderModalProps) {
-  const [endMileage, setEndMileage] = useState<number | ''>(currentMileage || '');
-  const [technicalNotes, setTechnicalNotes] = useState('');
-  const [customerNotes, setCustomerNotes] = useState('');
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const completeMutation = useMutation({
-    mutationFn: () =>
-      operationsApi.completeWorkOrder(workOrderId, {
-        endMileage: endMileage !== '' ? Number(endMileage) : undefined,
-        technicalNotes: technicalNotes.trim() || undefined,
-        customerNotes: customerNotes.trim() || undefined,
-      }),
-    onSuccess,
-    onError: (err) => {
-      setErrorMsg(getApiErrorMessage(err, 'Erro ao finalizar Ordem de Serviço.'));
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    completeMutation.mutate();
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 animate-in fade-in">
-      <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
-        <div className="flex items-center justify-between border-b border-outline-variant pb-3">
-          <h3 className="font-headline-sm text-headline-sm font-bold text-on-surface flex items-center gap-2">
-            <span className="material-symbols-outlined text-tertiary text-[24px]">verified</span>
-            Finalizar Ordem de Serviço
-          </h3>
-          <button onClick={onClose} className="text-on-surface-variant hover:text-on-surface">
-            <span className="material-symbols-outlined text-[20px]">close</span>
-          </button>
-        </div>
-
-        {errorMsg && (
-          <div className="p-3 bg-error-container text-on-error-container rounded-lg text-body-sm font-medium">
-            {errorMsg}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block font-label-sm text-label-sm text-on-surface-variant font-medium mb-1">
-              Quilometragem Final (Odômetro)
-            </label>
-            <input
-              type="number"
-              min={currentMileage || 0}
-              placeholder="Ex: 45050"
-              value={endMileage}
-              onChange={(e) => setEndMileage(e.target.value ? parseInt(e.target.value) : '')}
-              className="w-full h-10 px-3 bg-surface border border-outline-variant rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block font-label-sm text-label-sm text-on-surface-variant font-medium mb-1">
-              Parecer Técnico de Encerramento
-            </label>
-            <textarea
-              rows={3}
-              placeholder="Serviços executados com sucesso, testes de rodagem realizados..."
-              value={technicalNotes}
-              onChange={(e) => setTechnicalNotes(e.target.value)}
-              className="w-full p-2.5 bg-surface border border-outline-variant rounded-lg text-body-sm text-on-surface resize-none focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-            ></textarea>
-          </div>
-
-          <div>
-            <label className="block font-label-sm text-label-sm text-on-surface-variant font-medium mb-1">
-              Recomendações ao Cliente
-            </label>
-            <textarea
-              rows={2}
-              placeholder="Revisar pastilhas em 10.000 km, verificar alinhamento..."
-              value={customerNotes}
-              onChange={(e) => setCustomerNotes(e.target.value)}
-              className="w-full p-2.5 bg-surface border border-outline-variant rounded-lg text-body-sm text-on-surface resize-none focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-            ></textarea>
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-outline-variant">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={completeMutation.isPending}
-              className="px-5 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md font-bold hover:bg-primary-container transition-all disabled:opacity-50 flex items-center gap-2"
-            >
-              {completeMutation.isPending && (
-                <span className="material-symbols-outlined animate-spin text-[16px]">
-                  progress_activity
-                </span>
-              )}
-              Confirmar Conclusão
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-// -------------------------------------------------------------
-// Component: AddWorkOrderItemModal
+// Component: AddWorkOrderItemModal with Product Search
 // -------------------------------------------------------------
 interface AddWorkOrderItemModalProps {
   initialType: WorkOrderItemType;
@@ -763,6 +691,24 @@ function AddWorkOrderItemModal({ initialType, onClose, onAdd }: AddWorkOrderItem
   const [description, setDescription] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [unitPrice, setUnitPrice] = useState(0);
+  const [productId, setProductId] = useState<string | undefined>(undefined);
+  const [productSearch, setProductSearch] = useState('');
+
+  // Search products from inventory when adding PART
+  const { data: searchProductsResponse } = useQuery({
+    queryKey: ['inventory', 'products', 'search', productSearch],
+    queryFn: () => inventoryApi.getProducts({ search: productSearch, size: 10 }).then((r) => r.data),
+    enabled: type === 'PART',
+  });
+  const productOptions: Product[] = searchProductsResponse?.content || [];
+
+  const handleSelectProduct = (prod: Product) => {
+    setProductId(prod.id);
+    setName(prod.name);
+    setUnitPrice(prod.sellingPrice || prod.costPrice || 0);
+    setDescription(`Código: ${prod.skuCode || '-'} | Marca: ${prod.brand || '-'}`);
+    setProductSearch('');
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -770,6 +716,7 @@ function AddWorkOrderItemModal({ initialType, onClose, onAdd }: AddWorkOrderItem
 
     onAdd({
       type,
+      productId: type === 'PART' ? productId : undefined,
       name: name.trim(),
       description: description.trim() || undefined,
       status: 'PENDING',
@@ -781,11 +728,11 @@ function AddWorkOrderItemModal({ initialType, onClose, onAdd }: AddWorkOrderItem
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 animate-in fade-in">
-      <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 animate-in fade-in">
+      <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl max-w-[480px] w-full p-6 shadow-2xl space-y-4">
         <div className="flex items-center justify-between border-b border-outline-variant pb-3">
-          <h3 className="font-headline-sm text-headline-sm font-bold text-on-surface">
-            Adicionar {type === 'SERVICE' ? 'Serviço' : 'Peça'}
+          <h3 className="font-bold text-base text-on-surface">
+            Adicionar {type === 'SERVICE' ? 'Serviço' : 'Peça do Estoque'}
           </h3>
           <button onClick={onClose} className="text-on-surface-variant hover:text-on-surface">
             <span className="material-symbols-outlined text-[20px]">close</span>
@@ -796,30 +743,69 @@ function AddWorkOrderItemModal({ initialType, onClose, onAdd }: AddWorkOrderItem
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={() => setType('SERVICE')}
-              className={`flex-1 py-2 rounded-lg font-label-sm text-label-sm font-bold transition-colors ${
+              onClick={() => {
+                setType('SERVICE');
+                setProductId(undefined);
+              }}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${
                 type === 'SERVICE'
                   ? 'bg-primary text-on-primary'
                   : 'bg-surface border border-outline-variant text-on-surface-variant'
               }`}
             >
-              Serviço (Mão de Obra)
+              Mão de Obra
             </button>
             <button
               type="button"
               onClick={() => setType('PART')}
-              className={`flex-1 py-2 rounded-lg font-label-sm text-label-sm font-bold transition-colors ${
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${
                 type === 'PART'
                   ? 'bg-primary text-on-primary'
                   : 'bg-surface border border-outline-variant text-on-surface-variant'
               }`}
             >
-              Peça / Material
+              Peça do Catálogo
             </button>
           </div>
 
+          {type === 'PART' && (
+            <div>
+              <label className="block text-xs font-medium text-on-surface-variant mb-1">
+                Buscar no Catálogo de Peças
+              </label>
+              <input
+                type="text"
+                placeholder="Digite o nome, código ou SKU..."
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+                className="w-full h-10 px-3 bg-surface border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+              />
+
+              {productOptions.length > 0 && productSearch && (
+                <div className="mt-1 max-h-36 overflow-y-auto border border-outline-variant rounded-lg bg-surface shadow-lg divide-y divide-outline-variant/60">
+                  {productOptions.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => handleSelectProduct(p)}
+                      className="w-full p-2 text-left hover:bg-surface-container flex items-center justify-between text-xs transition-colors"
+                    >
+                      <div>
+                        <p className="font-semibold text-on-surface">{p.name}</p>
+                        <p className="text-[10px] text-on-surface-variant">SKU: {p.skuCode || '-'} • Marca: {p.brand || '-'}</p>
+                      </div>
+                      <span className="font-bold text-primary">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.sellingPrice || 0)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div>
-            <label className="block font-label-sm text-label-sm text-on-surface-variant font-medium mb-1">
+            <label className="block text-xs font-medium text-on-surface-variant mb-1">
               Nome / Descrição <span className="text-error">*</span>
             </label>
             <input
@@ -828,13 +814,13 @@ function AddWorkOrderItemModal({ initialType, onClose, onAdd }: AddWorkOrderItem
               placeholder={type === 'SERVICE' ? 'Ex: Troca de pastilhas' : 'Ex: Pastilha Dianteira Cerâmica'}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full h-10 px-3 bg-surface border border-outline-variant rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+              className="w-full h-10 px-3 bg-surface border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-label-sm text-label-sm text-on-surface-variant font-medium mb-1">
+              <label className="block text-xs font-medium text-on-surface-variant mb-1">
                 {type === 'SERVICE' ? 'Horas / Qtd' : 'Quantidade'}
               </label>
               <input
@@ -844,14 +830,12 @@ function AddWorkOrderItemModal({ initialType, onClose, onAdd }: AddWorkOrderItem
                 required
                 value={quantity}
                 onChange={(e) => setQuantity(parseFloat(e.target.value) || 1)}
-                className="w-full h-10 px-3 bg-surface border border-outline-variant rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                className="w-full h-10 px-3 bg-surface border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none"
               />
             </div>
 
             <div>
-              <label className="block font-label-sm text-label-sm text-on-surface-variant font-medium mb-1">
-                Preço Unitário (R$)
-              </label>
+              <label className="block text-xs font-medium text-on-surface-variant mb-1">Preço Unitário (R$)</label>
               <input
                 type="number"
                 step="0.01"
@@ -859,37 +843,24 @@ function AddWorkOrderItemModal({ initialType, onClose, onAdd }: AddWorkOrderItem
                 required
                 value={unitPrice}
                 onChange={(e) => setUnitPrice(parseFloat(e.target.value) || 0)}
-                className="w-full h-10 px-3 bg-surface border border-outline-variant rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                className="w-full h-10 px-3 bg-surface border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none"
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block font-label-sm text-label-sm text-on-surface-variant font-medium mb-1">
-              Observações Adicionais
-            </label>
-            <input
-              type="text"
-              placeholder="Ex: Marca OEM, especificação..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full h-10 px-3 bg-surface border border-outline-variant rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-            />
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-outline-variant">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container"
+              className="px-4 py-2 border border-outline-variant rounded-lg text-xs font-semibold text-on-surface hover:bg-surface-container"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md font-bold hover:bg-primary-container transition-all"
+              className="px-5 py-2 bg-primary text-on-primary rounded-lg text-xs font-bold hover:bg-primary-container transition-all"
             >
-              Adicionar
+              Adicionar à OS
             </button>
           </div>
         </form>

@@ -200,7 +200,7 @@ export const ReceivablesList: React.FC = () => {
       {/* Settle Modal */}
       {settleModalOpen && selectedRec && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-[480px] w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
               Baixar Pagamento / Liquidação
             </h3>

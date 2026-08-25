@@ -254,7 +254,7 @@ export function CustomerForm({ customerId }: CustomerFormProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-4 animate-in fade-in duration-200">
+    <div className="max-w-[960px] mx-auto py-4 animate-in fade-in duration-200">
       {/* Header */}
       <header className="flex items-center justify-between mb-8 pb-4 border-b border-outline-variant">
         <div className="flex items-center gap-4">

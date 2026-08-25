@@ -109,7 +109,7 @@ export function ToolList() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-16">
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-16">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-container-lowest p-6 rounded-2xl border border-outline-variant/60 shadow-sm">
         <div>
@@ -218,7 +218,7 @@ export function ToolList() {
         <div className="py-20 text-center text-on-surface-variant flex flex-col items-center bg-surface-container-lowest rounded-2xl border border-outline-variant/60 p-8">
           <span className="material-symbols-outlined text-[48px] text-on-surface-variant/40 mb-2">construction</span>
           <h3 className="text-lg font-semibold text-on-surface">Nenhuma ferramenta encontrada</h3>
-          <p className="text-sm text-on-surface-variant mt-1 max-w-sm">
+          <p className="text-sm text-on-surface-variant mt-1 max-w-[380px]">
             Cadastre os instrumentos, elevadores, scanners e ferramentas especiais da sua oficina.
           </p>
           <Link

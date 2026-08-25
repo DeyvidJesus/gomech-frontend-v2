@@ -88,7 +88,7 @@ export const InvoicesList: React.FC<InvoicesListProps> = ({
       <div className="p-12 text-center bg-slate-900/40 border border-slate-800/80 rounded-2xl">
         <Receipt className="w-12 h-12 text-slate-600 mx-auto mb-3" />
         <h3 className="text-base font-semibold text-slate-200">Nenhuma fatura encontrada</h3>
-        <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+        <p className="text-xs text-slate-500 mt-1 max-w-[420px] mx-auto">
           As faturas e comprovantes gerados pelos pagamentos das assinaturas aparecerão aqui.
         </p>
       </div>

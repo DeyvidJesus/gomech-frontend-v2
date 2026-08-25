@@ -186,7 +186,7 @@ export function InspectionForm({
   ];
 
   return (
-    <div className="max-w-4xl mx-auto py-4 animate-in fade-in duration-200">
+    <div className="max-w-[960px] mx-auto py-4 animate-in fade-in duration-200">
       {/* Header */}
       <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 pb-4 border-b border-outline-variant">
         <div>

@@ -5,6 +5,8 @@ export interface UserProfile {
   id: string;
   name: string;
   email: string;
+  phone?: string;
+  avatarUrl?: string;
   tenantId?: string;
   activeUnitId?: string;
   roles?: string[];

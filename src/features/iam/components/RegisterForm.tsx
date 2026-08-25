@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -7,6 +7,8 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { authApi } from '../api/auth';
 import { useAuthStore } from '../stores/authStore';
 import { handleApiValidationErrors, getApiErrorMessage } from '@/shared/utils/formErrors';
+import { cnpjService } from '@/shared/services/cnpjService';
+import { toast } from '@/shared/utils/toast';
 
 const registerSchema = z.object({
   // Step 1: Owner & Account
@@ -18,7 +20,10 @@ const registerSchema = z.object({
     message: 'Você deve concordar com os Termos de Serviço',
   }),
 
-  // Step 2: Workshop Profile
+  // Step 2: Workshop Profile & Receita Federal
+  cnpj: z.string().min(14, 'CNPJ é obrigatório (14 dígitos)').refine((val) => val.replace(/\D/g, '').length === 14, {
+    message: 'CNPJ deve conter 14 dígitos válidos',
+  }),
   workshopName: z.string().min(2, 'Nome da oficina deve ter no mínimo 2 caracteres'),
   address: z.string().min(5, 'Endereço completo é obrigatório'),
   bays: z.number().min(1, 'Informe ao menos 1 box de atendimento'),
@@ -39,7 +44,7 @@ export function RegisterForm() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<'STARTER' | 'PRO' | 'ELITE'>('PRO');
+  const [selectedPlan, setSelectedPlan] = useState<'STARTER' | 'PRO' | 'ENTERPRISE'>('PRO');
   const [selectedServices, setSelectedServices] = useState<string[]>([
     'Mecânica Geral',
     'Diagnóstico Computadorizado',
@@ -49,16 +54,21 @@ export function RegisterForm() {
   const [showCustomServiceInput, setShowCustomServiceInput] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
+  const [searchingCnpj, setSearchingCnpj] = useState(false);
+  const [searchingCep, setSearchingCep] = useState(false);
+  const [cepSearch, setCepSearch] = useState('');
+
   const setAuth = useAuthStore((state) => state.setAuth);
   const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
+    setValue,
     setError,
     trigger,
     getValues,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     mode: 'onTouched',
@@ -68,6 +78,7 @@ export function RegisterForm() {
       phone: '',
       password: '',
       terms: false,
+      cnpj: '',
       workshopName: '',
       address: '',
       bays: 4,
@@ -79,12 +90,15 @@ export function RegisterForm() {
     onSuccess: (data) => {
       setGlobalError(null);
       setAuth(data.accessToken, data.refreshToken, data.user);
+      toast.success('Conta criada com sucesso! 14 dias de teste gratuito liberados.');
       navigate({ to: '/dashboard' });
     },
     onError: (error: unknown) => {
       const handled = handleApiValidationErrors(error, setError);
       if (!handled) {
-        setGlobalError(getApiErrorMessage(error, 'Erro ao criar conta da oficina. Tente novamente.'));
+        const msg = getApiErrorMessage(error, 'Erro ao criar conta da oficina. Verifique os dados e tente novamente.');
+        setGlobalError(msg);
+        toast.error(msg);
       }
     },
   });
@@ -101,40 +115,75 @@ export function RegisterForm() {
   // Step 2 -> Step 3 validation
   const handleGoToStep3 = async () => {
     setGlobalError(null);
-    const isValid = await trigger(['workshopName', 'address', 'bays']);
+    const isValid = await trigger(['cnpj', 'workshopName', 'address', 'bays']);
     if (isValid) {
       setStep(3);
     }
   };
 
-  // Submit on Step 3 (Plan selection)
-  const handlePlanSelectionAndSubmit = (plan: 'STARTER' | 'PRO' | 'ELITE') => {
-    setSelectedPlan(plan);
-    setGlobalError(null);
-    const values = getValues();
+  // CNPJ Receita Federal Auto-Complete
+  const handleCnpjChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawVal = e.target.value;
+    const clean = rawVal.replace(/\D/g, '');
+    setValue('cnpj', rawVal, { shouldValidate: true });
 
-    registerMutation.mutate({
-      workshopName: values.workshopName,
-      address: values.address,
-      bays: values.bays,
-      services: selectedServices.length > 0 ? selectedServices : ['Mecânica Geral'],
-      ownerName: values.ownerName,
-      email: values.email,
-      password: values.password,
-    });
+    if (clean.length === 14) {
+      setSearchingCnpj(true);
+      const data = await cnpjService.fetchByCnpj(clean);
+      setSearchingCnpj(false);
+
+      if (data) {
+        if (data.nomeFantasia || data.razaoSocial) {
+          setValue('workshopName', data.nomeFantasia || data.razaoSocial, { shouldValidate: true });
+        }
+        if (data.email && !getValues('email')) {
+          setValue('email', data.email, { shouldValidate: true });
+        }
+        if (data.telefone && !getValues('phone')) {
+          setValue('phone', data.telefone, { shouldValidate: true });
+        }
+        if (data.logradouro) {
+          const fullAddress = `${data.logradouro}, ${data.numero || 'S/N'} - ${data.bairro} - ${data.municipio}/${data.uf} - CEP: ${data.cep}`;
+          setValue('address', fullAddress, { shouldValidate: true });
+        }
+        toast.success(`Dados da Receita Federal carregados: ${data.razaoSocial}`);
+      } else {
+        toast.info('CNPJ preenchido. Complete os dados da sua oficina.');
+      }
+    }
   };
 
-  const toggleService = (service: string) => {
-    setSelectedServices((prev) =>
-      prev.includes(service) ? prev.filter((s) => s !== service) : [...prev, service]
-    );
+  // CEP Auto-Complete
+  const handleLookupCep = async () => {
+    const clean = cepSearch.replace(/\D/g, '');
+    if (clean.length !== 8) return;
+
+    setSearchingCep(true);
+    const data = await cnpjService.fetchByCep(clean);
+    setSearchingCep(false);
+
+    if (data) {
+      const fullAddress = `${data.logradouro}, Bairro ${data.bairro} - ${data.municipio}/${data.uf} - CEP: ${data.cep}`;
+      setValue('address', fullAddress, { shouldValidate: true });
+      toast.success('Endereço localizado via CEP!');
+    } else {
+      toast.error('CEP não encontrado.');
+    }
+  };
+
+  const toggleService = (svc: string) => {
+    if (selectedServices.includes(svc)) {
+      setSelectedServices(selectedServices.filter((s) => s !== svc));
+    } else {
+      setSelectedServices([...selectedServices, svc]);
+    }
   };
 
   const handleAddCustomService = () => {
     if (customServiceInput.trim()) {
       const trimmed = customServiceInput.trim();
       if (!selectedServices.includes(trimmed)) {
-        setSelectedServices((prev) => [...prev, trimmed]);
+        setSelectedServices([...selectedServices, trimmed]);
       }
       setCustomServiceInput('');
       setShowCustomServiceInput(false);
@@ -152,15 +201,32 @@ export function RegisterForm() {
     }
   };
 
+  const onSubmit = (data: RegisterFormValues) => {
+    setGlobalError(null);
+
+    registerMutation.mutate({
+      ownerName: data.ownerName,
+      email: data.email,
+      phone: data.phone,
+      password: data.password,
+      cnpj: data.cnpj.replace(/\D/g, ''),
+      workshopName: data.workshopName,
+      address: data.address,
+      bays: data.bays,
+      services: selectedServices.length > 0 ? selectedServices : ['Mecânica Geral'],
+      planCode: selectedPlan,
+    });
+  };
+
   return (
-    <div className="flex w-full min-h-screen bg-surface-container-lowest font-body-md text-on-surface antialiased selection:bg-primary-fixed selection:text-on-primary-fixed">
-      {/* Split Screen Layout for Steps 1 & 2 */}
+    <div className="flex w-full min-h-screen bg-surface-container-lowest font-body-md text-on-surface antialiased">
+      {/* Steps 1 & 2: Split Screen Layout with Cinematic Hero Image */}
       {step !== 3 ? (
         <div className="flex w-full min-h-screen">
           {/* Left Column: Form Canvas */}
-          <div className="w-full lg:w-[500px] xl:w-[580px] shrink-0 flex flex-col justify-center px-6 sm:px-10 lg:px-12 py-10 relative z-10 bg-surface-container-lowest overflow-y-auto">
-            <div className="w-full mx-auto lg:mx-0">
-              {/* Top Step Progress Header */}
+          <div className="w-full lg:w-[520px] xl:w-[600px] shrink-0 flex flex-col justify-center px-6 sm:px-10 lg:px-12 py-10 relative z-10 bg-surface-container-lowest overflow-y-auto">
+            <div className="w-full max-w-[480px] mx-auto lg:mx-0">
+              {/* Step Progress Header */}
               <div className="flex items-center gap-2 mb-8">
                 <div className="flex items-center gap-1.5">
                   <span
@@ -211,8 +277,8 @@ export function RegisterForm() {
               {/* Title Section */}
               <div className="mb-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-on-primary-container shadow-sm">
-                    <span className="material-symbols-outlined text-[24px] text-white">
+                  <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-sm">
+                    <span className="material-symbols-outlined text-[24px]">
                       precision_manufacturing
                     </span>
                   </div>
@@ -223,7 +289,7 @@ export function RegisterForm() {
 
                 {step === 1 ? (
                   <>
-                    <h1 className="font-display-lg text-[32px] sm:text-[36px] font-bold text-on-surface mb-1 tracking-tight leading-tight">
+                    <h1 className="font-display-lg text-[28px] sm:text-[32px] font-bold text-on-surface mb-1 tracking-tight leading-tight">
                       Criar Conta GoMech
                     </h1>
                     <p className="font-body-md text-body-md text-on-surface-variant">
@@ -232,7 +298,7 @@ export function RegisterForm() {
                   </>
                 ) : (
                   <>
-                    <h1 className="font-display-lg text-[32px] sm:text-[36px] font-bold text-on-surface mb-1 tracking-tight leading-tight">
+                    <h1 className="font-display-lg text-[28px] sm:text-[32px] font-bold text-on-surface mb-1 tracking-tight leading-tight">
                       Dados da Oficina
                     </h1>
                     <p className="font-body-md text-body-md text-on-surface-variant">
@@ -244,92 +310,85 @@ export function RegisterForm() {
 
               {/* Global Error Banner */}
               {globalError && (
-                <div className="mb-6 bg-error-container/60 border border-error/40 text-on-error-container px-4 py-3 rounded-lg flex items-center gap-3 text-body-sm animate-in fade-in">
-                  <span className="material-symbols-outlined text-error text-[20px] shrink-0">error</span>
-                  <span>{globalError}</span>
+                <div className="mb-6 p-4 rounded-2xl bg-error-container/40 border border-error/20 flex items-start gap-3 animate-shake">
+                  <span className="material-symbols-outlined text-error text-[20px] shrink-0 mt-0.5">error</span>
+                  <p className="text-xs text-error font-medium leading-relaxed">{globalError}</p>
                 </div>
               )}
 
-              {/* Form Content */}
-              <form onSubmit={handleSubmit(() => {})} className="flex flex-col gap-4" noValidate>
-                {/* STEP 1: Owner & Account */}
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                {/* STEP 1: ADMIN USER */}
                 {step === 1 && (
-                  <div className="flex flex-col gap-4 animate-in fade-in duration-200">
-                    {/* Full Name */}
-                    <div className="flex flex-col gap-xs">
-                      <label className="font-label-md text-label-md text-on-surface" htmlFor="ownerName">
-                        Nome Completo do Proprietário <span className="text-primary">*</span>
+                  <div className="space-y-4 animate-in fade-in duration-200">
+                    <div>
+                      <label className="block text-xs font-semibold text-on-surface mb-1">
+                        Nome Completo do Responsável <span className="text-error">*</span>
                       </label>
                       <input
-                        id="ownerName"
                         type="text"
-                        placeholder="Ex: Carlos Alberto Silva"
-                        className={`h-[48px] px-md rounded-lg border bg-surface-container-lowest font-body-md text-body-md text-on-surface placeholder:text-outline focus:border-primary focus:outline-none transition-all ${
-                          errors.ownerName ? 'border-error ring-1 ring-error' : 'border-outline-variant'
-                        }`}
                         {...register('ownerName')}
+                        placeholder="Ex: Carlos Eduardo Silva"
+                        className={`w-full h-11 px-4 bg-surface border rounded-xl text-sm text-on-surface placeholder:text-outline/60 focus:outline-none focus:ring-1 transition-all ${
+                          errors.ownerName
+                            ? 'border-error focus:border-error focus:ring-error'
+                            : 'border-outline-variant focus:border-primary focus:ring-primary'
+                        }`}
                       />
                       {errors.ownerName && (
-                        <span className="text-body-sm text-[12px] text-error font-medium">
-                          {errors.ownerName.message}
-                        </span>
+                        <p className="text-[11px] text-error font-medium mt-1">{errors.ownerName.message}</p>
                       )}
                     </div>
 
-                    {/* Work Email */}
-                    <div className="flex flex-col gap-xs">
-                      <label className="font-label-md text-label-md text-on-surface" htmlFor="email">
-                        E-mail Profissional <span className="text-primary">*</span>
+                    <div>
+                      <label className="block text-xs font-semibold text-on-surface mb-1">
+                        E-mail Corporativo / Acesso <span className="text-error">*</span>
                       </label>
                       <input
-                        id="email"
                         type="email"
-                        placeholder="carlos@suaoficina.com.br"
-                        className={`h-[48px] px-md rounded-lg border bg-surface-container-lowest font-body-md text-body-md text-on-surface placeholder:text-outline focus:border-primary focus:outline-none transition-all ${
-                          errors.email ? 'border-error ring-1 ring-error' : 'border-outline-variant'
-                        }`}
                         {...register('email')}
+                        placeholder="carlos@oficina.com.br"
+                        className={`w-full h-11 px-4 bg-surface border rounded-xl text-sm text-on-surface placeholder:text-outline/60 focus:outline-none focus:ring-1 transition-all ${
+                          errors.email
+                            ? 'border-error focus:border-error focus:ring-error'
+                            : 'border-outline-variant focus:border-primary focus:ring-primary'
+                        }`}
                       />
                       {errors.email && (
-                        <span className="text-body-sm text-[12px] text-error font-medium">
-                          {errors.email.message}
-                        </span>
+                        <p className="text-[11px] text-error font-medium mt-1">{errors.email.message}</p>
                       )}
                     </div>
 
-                    {/* Phone */}
-                    <div className="flex flex-col gap-xs">
-                      <label className="font-label-md text-label-md text-on-surface" htmlFor="phone">
-                        Telefone / WhatsApp
+                    <div>
+                      <label className="block text-xs font-semibold text-on-surface mb-1">
+                        Telefone Celular / WhatsApp
                       </label>
                       <input
-                        id="phone"
                         type="tel"
-                        placeholder="+55 (11) 98765-4321"
-                        className="h-[48px] px-md rounded-lg border border-outline-variant bg-surface-container-lowest font-body-md text-body-md text-on-surface placeholder:text-outline focus:border-primary focus:outline-none transition-all"
                         {...register('phone')}
+                        placeholder="(11) 98765-4321"
+                        className="w-full h-11 px-4 bg-surface border border-outline-variant rounded-xl text-sm text-on-surface placeholder:text-outline/60 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                       />
                     </div>
 
-                    {/* Password */}
-                    <div className="flex flex-col gap-xs">
-                      <label className="font-label-md text-label-md text-on-surface" htmlFor="password">
-                        Senha de Acesso <span className="text-primary">*</span>
+                    <div>
+                      <label className="block text-xs font-semibold text-on-surface mb-1">
+                        Senha de Acesso <span className="text-error">*</span>
                       </label>
                       <div className="relative">
                         <input
-                          id="password"
                           type={showPassword ? 'text' : 'password'}
-                          placeholder="••••••••"
-                          className={`w-full h-[48px] px-md pr-[40px] rounded-lg border bg-surface-container-lowest font-body-md text-body-md text-on-surface placeholder:text-outline focus:border-primary focus:outline-none transition-all ${
-                            errors.password ? 'border-error ring-1 ring-error' : 'border-outline-variant'
-                          }`}
                           {...register('password')}
+                          placeholder="Mínimo 6 caracteres"
+                          className={`w-full h-11 pl-4 pr-11 bg-surface border rounded-xl text-sm text-on-surface placeholder:text-outline/60 focus:outline-none focus:ring-1 transition-all ${
+                            errors.password
+                              ? 'border-error focus:border-error focus:ring-error'
+                              : 'border-outline-variant focus:border-primary focus:ring-primary'
+                          }`}
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-md top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface focus:outline-none flex items-center justify-center"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface"
                         >
                           <span className="material-symbols-outlined text-[20px]">
                             {showPassword ? 'visibility_off' : 'visibility'}
@@ -337,50 +396,38 @@ export function RegisterForm() {
                         </button>
                       </div>
                       {errors.password && (
-                        <span className="text-body-sm text-[12px] text-error font-medium">
-                          {errors.password.message}
-                        </span>
+                        <p className="text-[11px] text-error font-medium mt-1">{errors.password.message}</p>
                       )}
                     </div>
 
-                    {/* Terms */}
-                    <div className="flex items-start gap-sm mt-1">
-                      <div className="flex h-6 items-center">
+                    <div className="pt-2">
+                      <label className="flex items-start gap-2.5 cursor-pointer">
                         <input
-                          id="terms"
                           type="checkbox"
-                          className="h-4 w-4 rounded border-outline-variant text-primary focus:ring-primary focus:ring-offset-0 bg-surface-container-lowest transition-colors cursor-pointer"
                           {...register('terms')}
+                          className="mt-0.5 w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary"
                         />
-                      </div>
-                      <div className="text-sm leading-6">
-                        <label
-                          className="font-body-sm text-body-sm text-on-surface-variant cursor-pointer"
-                          htmlFor="terms"
-                        >
+                        <span className="text-xs text-on-surface-variant leading-tight">
                           Concordo com os{' '}
-                          <a href="#" className="text-primary hover:underline font-medium">
-                            Termos de Serviço
+                          <a href="#" className="text-primary font-semibold hover:underline">
+                            Termos de Uso
                           </a>{' '}
-                          e{' '}
-                          <a href="#" className="text-primary hover:underline font-medium">
+                          e a{' '}
+                          <a href="#" className="text-primary font-semibold hover:underline">
                             Política de Privacidade
                           </a>
                           .
-                        </label>
-                        {errors.terms && (
-                          <p className="text-body-sm text-[12px] text-error font-medium block">
-                            {errors.terms.message}
-                          </p>
-                        )}
-                      </div>
+                        </span>
+                      </label>
+                      {errors.terms && (
+                        <p className="text-[11px] text-error font-medium mt-1">{errors.terms.message}</p>
+                      )}
                     </div>
 
-                    {/* Continue Button */}
                     <button
                       type="button"
                       onClick={handleGoToStep2}
-                      className="mt-3 h-[48px] w-full rounded-lg flex items-center justify-center gap-2 bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container active:translate-y-[1px] transition-all duration-150 shadow-sm font-bold"
+                      className="w-full h-12 mt-4 bg-primary text-on-primary font-bold text-sm rounded-xl hover:bg-primary-container hover:text-on-primary-container transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
                     >
                       <span>Continuar: Dados da Oficina</span>
                       <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
@@ -388,105 +435,152 @@ export function RegisterForm() {
                   </div>
                 )}
 
-                {/* STEP 2: Workshop Profile */}
+                {/* STEP 2: WORKSHOP PROFILE & RECEITA FEDERAL */}
                 {step === 2 && (
-                  <div className="flex flex-col gap-4 animate-in fade-in duration-200">
+                  <div className="space-y-4 animate-in fade-in duration-200">
                     {/* Logo Upload Box */}
-                    <label className="group border border-dashed border-outline-variant rounded-xl p-3.5 flex items-center gap-3.5 cursor-pointer hover:bg-surface-container-low hover:border-primary transition-colors bg-surface">
+                    <label className="group border border-dashed border-outline-variant rounded-xl p-3 flex items-center gap-3 cursor-pointer hover:bg-surface-container-low hover:border-primary transition-colors bg-surface">
                       <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
-                      <div className="w-14 h-14 rounded-xl bg-surface-variant flex items-center justify-center text-on-surface-variant group-hover:bg-primary-fixed group-hover:text-primary transition-colors shrink-0 overflow-hidden">
+                      <div className="w-12 h-12 rounded-xl bg-surface-variant flex items-center justify-center text-on-surface-variant group-hover:bg-primary/10 group-hover:text-primary transition-colors shrink-0 overflow-hidden">
                         {logoPreview ? (
                           <img src={logoPreview} alt="Logo Preview" className="w-full h-full object-cover" />
                         ) : (
-                          <span className="material-symbols-outlined text-[24px]">add_a_photo</span>
+                          <span className="material-symbols-outlined text-[22px]">add_a_photo</span>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-label-md text-label-md text-on-surface font-semibold">
-                          {logoPreview ? 'Logo Carregada' : 'Logo da Oficina'}
+                        <p className="text-xs text-on-surface font-semibold">
+                          {logoPreview ? 'Logomarca Carregada' : 'Logomarca da Oficina'}
                         </p>
-                        <p className="font-body-sm text-body-sm text-on-surface-variant text-[11px]">
-                          Clique para selecionar (PNG ou JPG até 2MB).
+                        <p className="text-[11px] text-on-surface-variant">
+                          PNG ou JPG até 2MB (opcional).
                         </p>
                       </div>
                     </label>
 
-                    {/* Workshop Name */}
-                    <div className="flex flex-col gap-xs">
-                      <label className="font-label-md text-label-md text-on-surface" htmlFor="workshopName">
-                        Nome Fantasia da Oficina <span className="text-primary">*</span>
+                    {/* CNPJ with Receita Federal Auto-Lookup */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-semibold text-on-surface">
+                          CNPJ da Oficina <span className="text-error">*</span>
+                        </label>
+                        <span className="text-[11px] text-tertiary flex items-center gap-1 font-semibold">
+                          <span className="material-symbols-outlined text-[14px]">bolt</span>
+                          Busca na Receita Federal
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          maxLength={18}
+                          {...register('cnpj')}
+                          onChange={handleCnpjChange}
+                          placeholder="00.000.000/0000-00"
+                          className={`w-full h-11 px-4 bg-surface border rounded-xl text-sm font-mono text-on-surface placeholder:text-outline/60 focus:outline-none focus:ring-1 transition-all ${
+                            errors.cnpj
+                              ? 'border-error focus:border-error focus:ring-error'
+                              : 'border-outline-variant focus:border-primary focus:ring-primary'
+                          }`}
+                        />
+                        {searchingCnpj && (
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-[18px] text-primary animate-spin">
+                            progress_activity
+                          </span>
+                        )}
+                      </div>
+                      {errors.cnpj && (
+                        <p className="text-[11px] text-error font-medium mt-1">{errors.cnpj.message}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-on-surface mb-1">
+                        Razão Social / Nome da Oficina <span className="text-error">*</span>
                       </label>
                       <input
-                        id="workshopName"
                         type="text"
-                        placeholder="Ex: Turbo Power Auto Center"
-                        className={`h-[48px] px-md rounded-lg border bg-surface-container-lowest font-body-md text-body-md text-on-surface placeholder:text-outline focus:border-primary focus:outline-none transition-all ${
-                          errors.workshopName ? 'border-error ring-1 ring-error' : 'border-outline-variant'
-                        }`}
                         {...register('workshopName')}
+                        placeholder="Ex: Auto Mecânica Estrela Ltda"
+                        className={`w-full h-11 px-4 bg-surface border rounded-xl text-sm text-on-surface placeholder:text-outline/60 focus:outline-none focus:ring-1 transition-all ${
+                          errors.workshopName
+                            ? 'border-error focus:border-error focus:ring-error'
+                            : 'border-outline-variant focus:border-primary focus:ring-primary'
+                        }`}
                       />
                       {errors.workshopName && (
-                        <span className="text-body-sm text-[12px] text-error font-medium">
-                          {errors.workshopName.message}
-                        </span>
+                        <p className="text-[11px] text-error font-medium mt-1">{errors.workshopName.message}</p>
                       )}
                     </div>
 
-                    {/* Primary Address */}
-                    <div className="flex flex-col gap-xs">
-                      <label className="font-label-md text-label-md text-on-surface" htmlFor="address">
-                        Endereço Completo da Matriz <span className="text-primary">*</span>
+                    {/* CEP Helper */}
+                    <div>
+                      <label className="block text-xs font-semibold text-on-surface mb-1">
+                        Busca de Endereço por CEP
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          maxLength={9}
+                          value={cepSearch}
+                          onChange={(e) => setCepSearch(e.target.value)}
+                          placeholder="00000-000"
+                          className="w-36 h-10 px-3 bg-surface border border-outline-variant rounded-xl text-sm font-mono text-on-surface"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleLookupCep}
+                          disabled={searchingCep}
+                          className="h-10 px-4 bg-surface-container hover:bg-surface-container-high border border-outline-variant rounded-xl text-xs font-bold text-on-surface flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                        >
+                          {searchingCep ? (
+                            <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+                          ) : (
+                            <span className="material-symbols-outlined text-[16px]">search</span>
+                          )}
+                          Buscar CEP
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-on-surface mb-1">
+                        Endereço Completo da Matriz <span className="text-error">*</span>
                       </label>
                       <input
-                        id="address"
                         type="text"
-                        placeholder="Ex: Av. das Américas, 1000 - Barra da Tijuca, RJ"
-                        className={`h-[48px] px-md rounded-lg border bg-surface-container-lowest font-body-md text-body-md text-on-surface placeholder:text-outline focus:border-primary focus:outline-none transition-all ${
-                          errors.address ? 'border-error ring-1 ring-error' : 'border-outline-variant'
-                        }`}
                         {...register('address')}
+                        placeholder="Rua, Número, Bairro, Cidade - UF, CEP"
+                        className={`w-full h-11 px-4 bg-surface border rounded-xl text-sm text-on-surface placeholder:text-outline/60 focus:outline-none focus:ring-1 transition-all ${
+                          errors.address
+                            ? 'border-error focus:border-error focus:ring-error'
+                            : 'border-outline-variant focus:border-primary focus:ring-primary'
+                        }`}
                       />
                       {errors.address && (
-                        <span className="text-body-sm text-[12px] text-error font-medium">
-                          {errors.address.message}
-                        </span>
+                        <p className="text-[11px] text-error font-medium mt-1">{errors.address.message}</p>
                       )}
                     </div>
 
-                    {/* Service Bays */}
-                    <div className="flex flex-col gap-xs">
-                      <label className="font-label-md text-label-md text-on-surface" htmlFor="bays">
-                        Boxes / Elevadores de Atendimento <span className="text-primary">*</span>
+                    {/* Number of Service Bays */}
+                    <div>
+                      <label className="block text-xs font-semibold text-on-surface mb-1">
+                        Quantidade de Boxes de Atendimento <span className="text-error">*</span>
                       </label>
-                      <div className="relative">
-                        <span className="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">
-                          garage
-                        </span>
-                        <input
-                          id="bays"
-                          type="number"
-                          min={1}
-                          max={50}
-                          placeholder="4"
-                          className={`w-full h-[48px] pl-10 pr-md rounded-lg border bg-surface-container-lowest font-body-md text-body-md text-on-surface placeholder:text-outline focus:border-primary focus:outline-none transition-all ${
-                            errors.bays ? 'border-error ring-1 ring-error' : 'border-outline-variant'
-                          }`}
-                          {...register('bays', { valueAsNumber: true })}
-                        />
-                      </div>
-                      {errors.bays && (
-                        <span className="text-body-sm text-[12px] text-error font-medium">
-                          {errors.bays.message}
-                        </span>
-                      )}
+                      <input
+                        type="number"
+                        min={1}
+                        max={50}
+                        {...register('bays', { valueAsNumber: true })}
+                        className="w-32 h-10 px-3 bg-surface border border-outline-variant rounded-xl text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary"
+                      />
                     </div>
 
-                    {/* Main Services (Pills) */}
-                    <div className="flex flex-col gap-xs">
-                      <label className="font-label-md text-label-md text-on-surface">
-                        Principais Serviços Prestados
+                    {/* Full List of Services + Custom Adder */}
+                    <div>
+                      <label className="block text-xs font-semibold text-on-surface mb-1.5">
+                        Serviços e Especialidades da Oficina
                       </label>
-                      <div className="flex flex-wrap gap-1.5 mt-1">
+                      <div className="flex flex-wrap gap-1.5">
                         {DEFAULT_SERVICES.map((srv) => {
                           const isSelected = selectedServices.includes(srv);
                           return (
@@ -494,10 +588,10 @@ export function RegisterForm() {
                               key={srv}
                               type="button"
                               onClick={() => toggleService(srv)}
-                              className={`px-3 py-1.5 rounded-full font-label-sm text-[11px] transition-all flex items-center gap-1 ${
+                              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1 ${
                                 isSelected
                                   ? 'bg-primary text-on-primary font-bold shadow-xs'
-                                  : 'bg-surface border border-outline-variant text-on-surface-variant hover:border-primary'
+                                  : 'bg-surface border border-outline-variant text-on-surface-variant hover:bg-surface-container'
                               }`}
                             >
                               {isSelected && (
@@ -516,7 +610,7 @@ export function RegisterForm() {
                               key={customSrv}
                               type="button"
                               onClick={() => toggleService(customSrv)}
-                              className="px-3 py-1.5 rounded-full font-label-sm text-[11px] bg-primary text-on-primary font-bold shadow-xs flex items-center gap-1"
+                              className="px-3 py-1.5 rounded-full text-xs bg-primary text-on-primary font-bold shadow-xs flex items-center gap-1"
                             >
                               <span className="material-symbols-outlined text-[14px]">check</span>
                               {customSrv}
@@ -528,7 +622,7 @@ export function RegisterForm() {
                           <button
                             type="button"
                             onClick={() => setShowCustomServiceInput(true)}
-                            className="px-3 py-1.5 rounded-full font-label-sm text-[11px] border border-dashed border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary transition-colors flex items-center gap-1"
+                            className="px-3 py-1.5 rounded-full text-xs border border-dashed border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary transition-colors flex items-center gap-1"
                           >
                             <span className="material-symbols-outlined text-[14px]">add</span>
                             Personalizado
@@ -546,12 +640,12 @@ export function RegisterForm() {
                                   handleAddCustomService();
                                 }
                               }}
-                              className="h-7 px-2 border border-primary rounded-lg text-[11px] bg-surface text-on-surface outline-none"
+                              className="h-8 px-2 border border-primary rounded-lg text-xs bg-surface text-on-surface outline-none"
                             />
                             <button
                               type="button"
                               onClick={handleAddCustomService}
-                              className="px-2 py-1 bg-primary text-on-primary rounded-lg text-[11px] font-bold"
+                              className="px-2.5 py-1.5 bg-primary text-on-primary rounded-lg text-xs font-bold"
                             >
                               Adicionar
                             </button>
@@ -560,19 +654,18 @@ export function RegisterForm() {
                       </div>
                     </div>
 
-                    {/* Step 2 Buttons */}
-                    <div className="flex items-center gap-3 mt-4">
+                    <div className="flex gap-3 pt-4">
                       <button
                         type="button"
                         onClick={() => setStep(1)}
-                        className="h-[48px] px-5 rounded-lg border border-outline-variant bg-surface-container-lowest font-label-md text-label-md text-on-surface hover:bg-surface-container transition-colors"
+                        className="w-1/3 h-12 border border-outline-variant text-on-surface font-semibold text-sm rounded-xl hover:bg-surface-container transition-colors"
                       >
                         Voltar
                       </button>
                       <button
                         type="button"
                         onClick={handleGoToStep3}
-                        className="flex-1 h-[48px] rounded-lg flex items-center justify-center gap-2 bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container active:translate-y-[1px] transition-all duration-150 shadow-sm font-bold"
+                        className="w-2/3 h-12 bg-primary text-on-primary font-bold text-sm rounded-xl hover:bg-primary-container hover:text-on-primary-container transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
                       >
                         <span>Escolher Plano</span>
                         <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
@@ -583,11 +676,11 @@ export function RegisterForm() {
               </form>
 
               {/* Footer */}
-              <div className="mt-8 text-center">
-                <p className="font-body-sm text-body-sm text-on-surface-variant">
-                  Já possui uma conta?{' '}
-                  <Link to="/login" className="text-primary font-semibold hover:underline">
-                    Fazer Login
+              <div className="mt-8 text-center border-t border-outline-variant pt-4">
+                <p className="text-xs text-on-surface-variant">
+                  Já possui uma conta na GoMech?{' '}
+                  <Link to="/login" className="text-primary font-bold hover:underline">
+                    Fazer login
                   </Link>
                 </p>
               </div>
@@ -597,7 +690,7 @@ export function RegisterForm() {
           {/* Right Column: Cinematic Brand Illustration */}
           <div className="hidden lg:flex flex-1 relative bg-inverse-surface items-center justify-center overflow-hidden border-l border-outline-variant">
             <img
-              alt="Modern automotive workshop"
+              alt="Oficina Mecânica Moderna"
               className="absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-overlay"
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0N7SsS-O4zHN-npd1PALSuWbjEgw-lxlOafUhlokBEp_zJcyc77PqRDf30svppKAzSuv7C-JzZ5kzVwgJg2aRDbijKH9VBVLOgaqyUkpr_uJVA2Wwfc1OYiIeYZ91vMm6C0ttfRiuwlPBJnunTBQUOQlnfeSXdU1ImPjezZ-zfxjw8-XsJf7B8pE5XVWLBQU6DTnI6Nq-bOQ9Ua9ZzFGwv9lcs1CQ9-hTh1PghrynwyV2a5_ZJ5M-B3AsG9JMiMwuxBCNjmQmjEw"
             />
@@ -618,7 +711,7 @@ export function RegisterForm() {
                 sua oficina mecânica.
               </h2>
 
-              <p className="font-body-lg text-body-lg text-surface-variant">
+              <p className="font-body-lg text-body-lg text-surface-variant max-w-[500px]">
                 Junte-se a milhares de centros automotivos de alta performance usando o GoMech para agendamentos,
                 ordens de serviço, estoque e controle financeiro.
               </p>
@@ -635,206 +728,171 @@ export function RegisterForm() {
           </div>
         </div>
       ) : (
-        /* STEP 3: Plan Selection (Full Width Canvas matching onboarding_sele_o_de_plano) */
+        /* STEP 3: Plan Selection (Full Canvas) */
         <div className="w-full min-h-screen flex flex-col bg-background animate-in fade-in duration-200">
           {/* Top Navbar */}
           <nav className="w-full flex items-center justify-between px-6 sm:px-10 h-16 border-b border-outline-variant bg-surface sticky top-0 z-50">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container shadow-sm">
-                <span className="material-symbols-outlined text-[20px] text-white">
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-on-primary shadow-sm">
+                <span className="material-symbols-outlined text-[20px]">
                   precision_manufacturing
                 </span>
               </div>
               <span className="font-headline-sm text-headline-sm font-bold text-primary">GoMech</span>
             </div>
 
-            <div className="flex items-center gap-4">
-              <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider hidden sm:block">
-                Etapa 3 de 3: Seleção de Plano
-              </span>
-              <div className="h-2 w-28 bg-surface-container-high rounded-full overflow-hidden">
-                <div className="h-full bg-primary w-full rounded-full"></div>
-              </div>
+            <div className="flex items-center gap-2 text-xs text-on-surface-variant font-semibold">
+              <span>Etapa 3 de 3: Seleção de Plano</span>
             </div>
           </nav>
 
-          {/* Main Content Area */}
-          <main className="flex-1 flex flex-col items-center justify-center py-12 px-4 sm:px-6">
-            <div className="text-center mx-auto mb-10">
-              <h1 className="font-display-lg text-3xl sm:text-4xl font-bold text-on-surface mb-2">
+          <main className="flex-1 max-w-[1100px] w-full mx-auto px-6 py-12 flex flex-col justify-center">
+            <div className="text-center max-w-[640px] mx-auto mb-10">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-tertiary-container/30 text-tertiary text-xs font-bold mb-3 border border-tertiary/20">
+                <span className="material-symbols-outlined text-[16px]">verified</span>
+                14 Dias de Teste Gratuito
+              </div>
+              <h2 className="text-3xl font-extrabold text-on-surface tracking-tight font-headline-lg">
                 Escolha o plano ideal para sua oficina
-              </h1>
-              <p className="font-body-lg text-body-lg text-on-surface-variant">
-                Potencialize a gestão da sua oficina com ferramentas precisas e suporte avançado. Cancele ou altere
-                quando quiser.
+              </h2>
+              <p className="text-sm text-on-surface-variant mt-2">
+                Experimente todos os recursos gratuitamente por 14 dias. Sem cobrança antecipada.
               </p>
             </div>
 
             {/* Global Error Banner */}
             {globalError && (
-              <div className="max-w-4xl w-full mb-8 bg-error-container/60 border border-error/40 text-on-error-container px-4 py-3 rounded-xl flex items-center gap-3 text-body-sm animate-in fade-in">
-                <span className="material-symbols-outlined text-error text-[20px] shrink-0">error</span>
-                <span>{globalError}</span>
+              <div className="mb-6 max-w-[600px] mx-auto p-4 rounded-2xl bg-error-container/40 border border-error/20 flex items-start gap-3">
+                <span className="material-symbols-outlined text-error text-[20px] shrink-0 mt-0.5">error</span>
+                <p className="text-xs text-error font-medium">{globalError}</p>
               </div>
             )}
 
-            {/* Pricing Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto w-full items-start">
-              {/* Starter Plan */}
-              <div className="bg-surface border border-outline-variant rounded-2xl p-6 flex flex-col h-full hover:bg-surface-container-low transition-all duration-200 shadow-xs">
-                <div className="mb-6">
-                  <h2 className="font-headline-sm text-headline-sm font-bold text-on-surface mb-1">Starter</h2>
-                  <p className="font-body-sm text-body-sm text-on-surface-variant mb-4">
-                    Para oficinas em crescimento que buscam organização básica.
-                  </p>
-                  <div className="flex items-baseline gap-1">
-                    <span className="font-headline-lg text-3xl font-bold text-on-surface">R$ 99</span>
-                    <span className="font-body-sm text-body-sm text-on-surface-variant">/mês</span>
+            {/* Plans Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                {
+                  code: 'STARTER',
+                  name: 'Starter',
+                  price: 'R$ 99',
+                  desc: 'Ideal para oficinas independentes e mecânicos autônomos.',
+                  features: [
+                    'Até 50 OS / mês',
+                    'Até 3 Mecânicos',
+                    'Gestão de Peças e Estoque',
+                    'Controle de Ferramentaria',
+                  ],
+                },
+                {
+                  code: 'PRO',
+                  name: 'Professional',
+                  price: 'R$ 199',
+                  desc: 'Para oficinas em crescimento que buscam gestão completa e automação.',
+                  badge: 'Mais Escolhido',
+                  popular: true,
+                  features: [
+                    'Até 250 OS / mês',
+                    'Até 10 Mecânicos',
+                    'Módulo Financeiro & DRE',
+                    'IA GoMech para Diagnósticos',
+                    'Disparo de WhatsApp e E-mails',
+                  ],
+                },
+                {
+                  code: 'ENTERPRISE',
+                  name: 'Enterprise',
+                  price: 'R$ 399',
+                  desc: 'Para grandes centros automotivos e redes de oficinas.',
+                  features: [
+                    'Ordens de Serviço Ilimitadas',
+                    'Mecânicos e Filiais Ilimitadas',
+                    'Módulo Financeiro + Conciliação',
+                    'IA Ilimitada e Suporte Dedicado',
+                  ],
+                },
+              ].map((p) => {
+                const active = selectedPlan === p.code;
+                return (
+                  <div
+                    key={p.code}
+                    onClick={() => setSelectedPlan(p.code as any)}
+                    className={`p-7 rounded-3xl border cursor-pointer relative flex flex-col justify-between transition-all duration-200 ${
+                      active
+                        ? 'border-primary bg-surface-container-lowest ring-2 ring-primary/40 shadow-xl scale-[1.02]'
+                        : p.popular
+                        ? 'border-primary/60 bg-surface-container-lowest hover:border-primary shadow-md'
+                        : 'border-outline-variant bg-surface-container-lowest hover:border-outline shadow-sm'
+                    }`}
+                  >
+                    {p.badge && (
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full bg-primary text-on-primary text-[10px] font-black uppercase tracking-wider shadow-sm">
+                        {p.badge}
+                      </span>
+                    )}
+
+                    <div>
+                      <h3 className="text-xl font-bold text-on-surface">{p.name}</h3>
+                      <p className="text-xs text-on-surface-variant mt-1.5 leading-relaxed">{p.desc}</p>
+
+                      <div className="my-6 pb-6 border-b border-outline-variant/60">
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-3xl font-extrabold font-mono text-on-surface">
+                            {p.price}
+                          </span>
+                          <span className="text-xs text-on-surface-variant">/ mês</span>
+                        </div>
+                      </div>
+
+                      <ul className="space-y-3 mb-6">
+                        {p.features.map((f, i) => (
+                          <li key={i} className="flex items-center gap-2 text-xs text-on-surface">
+                            <span className="material-symbols-outlined text-primary text-[16px]">
+                              check_circle
+                            </span>
+                            <span>{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedPlan(p.code as any);
+                        handleSubmit(onSubmit)();
+                      }}
+                      disabled={isSubmitting || registerMutation.isPending}
+                      className={`w-full py-3.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm ${
+                        active
+                          ? 'bg-primary text-on-primary hover:bg-primary-container shadow-primary/20'
+                          : 'bg-surface-container text-on-surface hover:bg-surface-container-high border border-outline-variant'
+                      }`}
+                    >
+                      {isSubmitting || registerMutation.isPending ? (
+                        <>
+                          <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+                          <span>Criando conta da oficina...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Começar com {p.name} (14 Dias Grátis)</span>
+                          <span className="material-symbols-outlined text-[16px]">rocket_launch</span>
+                        </>
+                      )}
+                    </button>
                   </div>
-                </div>
-
-                <ul className="flex flex-col gap-3 mb-8 flex-1 text-body-sm">
-                  <li className="flex items-start gap-2">
-                    <span className="material-symbols-outlined text-primary text-[18px]">check_circle</span>
-                    <span>Até 3 mecânicos</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="material-symbols-outlined text-primary text-[18px]">check_circle</span>
-                    <span>Controle de Ordens de Serviço (OS)</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="material-symbols-outlined text-primary text-[18px]">check_circle</span>
-                    <span>Gestão de clientes básica</span>
-                  </li>
-                  <li className="flex items-start gap-2 opacity-50">
-                    <span className="material-symbols-outlined text-on-surface-variant text-[18px]">close</span>
-                    <span className="line-through">Controle financeiro avançado</span>
-                  </li>
-                  <li className="flex items-start gap-2 opacity-50">
-                    <span className="material-symbols-outlined text-on-surface-variant text-[18px]">close</span>
-                    <span className="line-through">Suporte com IA</span>
-                  </li>
-                </ul>
-
-                <button
-                  type="button"
-                  onClick={() => handlePlanSelectionAndSubmit('STARTER')}
-                  disabled={registerMutation.isPending}
-                  className="w-full py-3 px-4 border border-outline text-on-surface font-label-md text-label-md font-bold rounded-xl hover:bg-surface-container-high transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {registerMutation.isPending && selectedPlan === 'STARTER' ? (
-                    <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
-                  ) : null}
-                  Selecionar Starter
-                </button>
-              </div>
-
-              {/* Pro Plan (Highlighted) */}
-              <div className="bg-surface border-2 border-primary rounded-2xl p-6 flex flex-col h-full relative shadow-lg transform md:-translate-y-3">
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-on-primary font-label-sm text-[11px] uppercase tracking-wider font-bold px-3 py-1 rounded-full shadow-sm">
-                  Mais Popular
-                </div>
-
-                <div className="mb-6 pt-2">
-                  <h2 className="font-headline-sm text-headline-sm font-bold text-on-surface mb-1">Pro</h2>
-                  <p className="font-body-sm text-body-sm text-on-surface-variant mb-4">
-                    O pacote completo para gestão avançada e alta performance.
-                  </p>
-                  <div className="flex items-baseline gap-1">
-                    <span className="font-headline-lg text-3xl font-bold text-primary">R$ 199</span>
-                    <span className="font-body-sm text-body-sm text-on-surface-variant">/mês</span>
-                  </div>
-                </div>
-
-                <ul className="flex flex-col gap-3 mb-8 flex-1 text-body-sm">
-                  <li className="flex items-start gap-2">
-                    <span className="material-symbols-outlined text-primary text-[18px]">check_circle</span>
-                    <span>Mecânicos ilimitados</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="material-symbols-outlined text-primary text-[18px]">check_circle</span>
-                    <span>Controle de Ordens de Serviço (OS)</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="material-symbols-outlined text-primary text-[18px]">check_circle</span>
-                    <span>Gestão de clientes completa</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="material-symbols-outlined text-primary text-[18px]">check_circle</span>
-                    <span className="font-semibold text-on-surface">Controle financeiro avançado</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="material-symbols-outlined text-primary text-[18px]">check_circle</span>
-                    <span className="font-semibold text-on-surface">Suporte a diagnósticos com IA</span>
-                  </li>
-                </ul>
-
-                <button
-                  type="button"
-                  onClick={() => handlePlanSelectionAndSubmit('PRO')}
-                  disabled={registerMutation.isPending}
-                  className="w-full py-3.5 px-4 bg-primary text-on-primary font-label-md text-label-md font-bold rounded-xl hover:bg-primary-container active:translate-y-px transition-all shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {registerMutation.isPending && selectedPlan === 'PRO' ? (
-                    <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
-                  ) : null}
-                  Começar com Pro
-                </button>
-              </div>
-
-              {/* Elite Plan */}
-              <div className="bg-surface border border-outline-variant rounded-2xl p-6 flex flex-col h-full hover:bg-surface-container-low transition-all duration-200 shadow-xs">
-                <div className="mb-6">
-                  <h2 className="font-headline-sm text-headline-sm font-bold text-on-surface mb-1">Elite</h2>
-                  <p className="font-body-sm text-body-sm text-on-surface-variant mb-4">
-                    Soluções customizadas para redes de oficinas e franquias.
-                  </p>
-                  <div className="flex items-baseline gap-1">
-                    <span className="font-headline-md text-2xl font-bold text-on-surface">Customizado</span>
-                  </div>
-                </div>
-
-                <ul className="flex flex-col gap-3 mb-8 flex-1 text-body-sm">
-                  <li className="flex items-start gap-2">
-                    <span className="material-symbols-outlined text-primary text-[18px]">check_circle</span>
-                    <span>Tudo do plano Pro</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="material-symbols-outlined text-primary text-[18px]">check_circle</span>
-                    <span>Gestão Multi-Lojas / Multi-Unidades</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="material-symbols-outlined text-primary text-[18px]">check_circle</span>
-                    <span>API para integrações externas</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="material-symbols-outlined text-primary text-[18px]">check_circle</span>
-                    <span>Gerente de conta dedicado</span>
-                  </li>
-                </ul>
-
-                <button
-                  type="button"
-                  onClick={() => handlePlanSelectionAndSubmit('ELITE')}
-                  disabled={registerMutation.isPending}
-                  className="w-full py-3 px-4 border border-outline text-on-surface font-label-md text-label-md font-bold rounded-xl hover:bg-surface-container-high transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {registerMutation.isPending && selectedPlan === 'ELITE' ? (
-                    <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
-                  ) : null}
-                  Falar com Consultor
-                </button>
-              </div>
+                );
+              })}
             </div>
 
-            {/* Back button */}
-            <div className="mt-8">
+            {/* Back Button */}
+            <div className="mt-8 flex justify-center">
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="px-4 py-2 text-on-surface-variant hover:text-on-surface font-label-md text-label-md flex items-center gap-1.5"
+                className="px-5 py-2.5 border border-outline-variant rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container transition-colors flex items-center gap-1.5"
               >
-                <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                <span className="material-symbols-outlined text-[16px]">arrow_back</span>
                 Voltar para Dados da Oficina
               </button>
             </div>

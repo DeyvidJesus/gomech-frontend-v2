@@ -23,6 +23,7 @@ import { Route as DashboardUsersRouteImport } from './routes/dashboard.users'
 import { Route as DashboardUnitsRouteImport } from './routes/dashboard.units'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminRolesRouteImport } from './routes/admin.roles'
+import { Route as AdminProfileRouteImport } from './routes/admin.profile'
 import { Route as AdminCompanyRouteImport } from './routes/admin.company'
 import { Route as ToolsTransfersIndexRouteImport } from './routes/tools.transfers.index'
 import { Route as ToolsMaintenancesIndexRouteImport } from './routes/tools.maintenances.index'
@@ -129,6 +130,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
 const AdminRolesRoute = AdminRolesRouteImport.update({
   id: '/admin/roles',
   path: '/admin/roles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminProfileRoute = AdminProfileRouteImport.update({
+  id: '/admin/profile',
+  path: '/admin/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminCompanyRoute = AdminCompanyRouteImport.update({
@@ -331,6 +337,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/admin/company': typeof AdminCompanyRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/roles': typeof AdminRolesRoute
   '/admin/users': typeof AdminUsersRoute
   '/dashboard/units': typeof DashboardUnitsRoute
@@ -384,6 +391,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/admin/company': typeof AdminCompanyRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/roles': typeof AdminRolesRoute
   '/admin/users': typeof AdminUsersRoute
   '/dashboard/units': typeof DashboardUnitsRoute
@@ -438,6 +446,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/admin/company': typeof AdminCompanyRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/roles': typeof AdminRolesRoute
   '/admin/users': typeof AdminUsersRoute
   '/dashboard/units': typeof DashboardUnitsRoute
@@ -493,6 +502,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/admin/company'
+    | '/admin/profile'
     | '/admin/roles'
     | '/admin/users'
     | '/dashboard/units'
@@ -546,6 +556,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/admin/company'
+    | '/admin/profile'
     | '/admin/roles'
     | '/admin/users'
     | '/dashboard/units'
@@ -599,6 +610,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/admin/company'
+    | '/admin/profile'
     | '/admin/roles'
     | '/admin/users'
     | '/dashboard/units'
@@ -653,6 +665,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   AdminCompanyRoute: typeof AdminCompanyRoute
+  AdminProfileRoute: typeof AdminProfileRoute
   AdminRolesRoute: typeof AdminRolesRoute
   AdminUsersRoute: typeof AdminUsersRoute
   FinanceCashFlowRoute: typeof FinanceCashFlowRoute
@@ -797,6 +810,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/roles'
       fullPath: '/admin/roles'
       preLoaderRoute: typeof AdminRolesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/profile': {
+      id: '/admin/profile'
+      path: '/admin/profile'
+      fullPath: '/admin/profile'
+      preLoaderRoute: typeof AdminProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/company': {
@@ -1081,6 +1101,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   AdminCompanyRoute: AdminCompanyRoute,
+  AdminProfileRoute: AdminProfileRoute,
   AdminRolesRoute: AdminRolesRoute,
   AdminUsersRoute: AdminUsersRoute,
   FinanceCashFlowRoute: FinanceCashFlowRoute,

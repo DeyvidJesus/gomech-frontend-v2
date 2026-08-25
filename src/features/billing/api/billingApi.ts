@@ -3,7 +3,8 @@ import type {
   BillingPlan,
   Subscription,
   Payment,
-  InitiatePaymentDto,
+  CreateCheckoutDto,
+  CheckoutSessionResponse,
   ChangePlanDto,
   PageResponse,
 } from '../types';
@@ -11,24 +12,28 @@ import type {
 export const billingApi = {
   // Plan Catalog
   getPlans: () =>
-    api.get<BillingPlan[]>('/api/v1/billing/plans'),
+    api.get<BillingPlan[]>('/billing/plans'),
 
   // Tenant Subscription
   getSubscription: () =>
-    api.get<Subscription>('/api/v1/billing/subscription'),
+    api.get<Subscription>('/billing/subscription'),
 
   changePlan: (data: ChangePlanDto) =>
-    api.post<Subscription>('/api/v1/billing/subscription/change-plan', data),
+    api.post<Subscription>('/billing/subscription/change-plan', data),
 
-  // Payments / Checkout
-  checkout: (data: InitiatePaymentDto) =>
-    api.post<Payment>('/api/v1/billing/payments/checkout', data),
+  // Hosted Checkout Pagar.me V5
+  createCheckout: (data: CreateCheckoutDto) =>
+    api.post<CheckoutSessionResponse>('/billing/payments/checkout', data),
 
+  createCheckoutSession: (data: CreateCheckoutDto) =>
+    api.post<CheckoutSessionResponse>('/billing/payments/checkout', data),
+
+  // Payments / Invoice history
   getPayments: (page = 0, size = 20) =>
-    api.get<PageResponse<Payment>>('/api/v1/billing/payments', {
+    api.get<PageResponse<Payment>>('/billing/payments', {
       params: { page, size },
     }),
 
   getPayment: (id: string) =>
-    api.get<Payment>(`/api/v1/billing/payments/${id}`),
+    api.get<Payment>(`/billing/payments/${id}`),
 };

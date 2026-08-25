@@ -12,12 +12,15 @@ export type LoginResponse = AuthResponseDto;
 
 export interface RegisterWorkshopRequest {
   workshopName: string;
+  cnpj?: string;
+  phone?: string;
   address: string;
   bays: number;
   services?: string[];
   ownerName: string;
   email: string;
   password?: string;
+  planCode?: string;
 }
 
 export interface GoogleAuthorizeResponse {
