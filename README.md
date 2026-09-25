@@ -1,10 +1,12 @@
 # GoMech Frontend
 
+[![CI](https://github.com/DeyvidJesus/gomech-frontend-v2/actions/workflows/ci.yml/badge.svg)](https://github.com/DeyvidJesus/gomech-frontend-v2/actions/workflows/ci.yml)
+
 Aplicação web SPA em React 19, TypeScript e Vite. As rotas ficam em `src/routes/`; `src/features/` agrupa componentes, chamadas de API e tipos por domínio. TanStack Query cuida do estado remoto, Zustand do estado compartilhado da interface e Axios da comunicação HTTP.
 
 ## Executar
 
-Requer Node.js 20 e npm.
+Requer Node.js 20 (versão fixada em `.nvmrc`) e npm.
 
 ```bash
 npm ci
@@ -16,13 +18,14 @@ O Vite inicia em `http://localhost:5173`. Para apontar para outra API, configure
 Comandos disponíveis:
 
 ```bash
-npm run lint
-npm run build
+npm run lint     # ESLint
+npm run build    # checagem de tipos (tsc -b) e build de produção
 npm run preview
 ```
 
+A CI executa `npm ci`, `npm run lint` e `npm run build` a cada push e pull request.
+
 ## Referências
 
-- [Guia de estudo do projeto](https://github.com/DeyvidJesus/gomech/blob/master/docs/guias/guia-de-estudo-entrevista.md)
 - [Arquitetura do frontend](https://github.com/DeyvidJesus/gomech/blob/master/docs/FRONTEND_ARCHITECTURE.md)
 - [Design system e protótipos](https://github.com/DeyvidJesus/gomech/blob/master/docs/design/README.md)
