@@ -21,6 +21,7 @@ import { Route as FinanceDashboardRouteImport } from './routes/finance.dashboard
 import { Route as FinanceCashFlowRouteImport } from './routes/finance.cash-flow'
 import { Route as DashboardUsersRouteImport } from './routes/dashboard.users'
 import { Route as DashboardUnitsRouteImport } from './routes/dashboard.units'
+import { Route as AnalyticsReportsRouteImport } from './routes/analytics.reports'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminRolesRouteImport } from './routes/admin.roles'
 import { Route as AdminProfileRouteImport } from './routes/admin.profile'
@@ -121,6 +122,11 @@ const DashboardUnitsRoute = DashboardUnitsRouteImport.update({
   id: '/units',
   path: '/units',
   getParentRoute: () => DashboardRoute,
+} as any)
+const AnalyticsReportsRoute = AnalyticsReportsRouteImport.update({
+  id: '/analytics/reports',
+  path: '/analytics/reports',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/admin/users',
@@ -340,6 +346,7 @@ export interface FileRoutesByFullPath {
   '/admin/profile': typeof AdminProfileRoute
   '/admin/roles': typeof AdminRolesRoute
   '/admin/users': typeof AdminUsersRoute
+  '/analytics/reports': typeof AnalyticsReportsRoute
   '/dashboard/units': typeof DashboardUnitsRoute
   '/dashboard/users': typeof DashboardUsersRoute
   '/finance/cash-flow': typeof FinanceCashFlowRoute
@@ -394,6 +401,7 @@ export interface FileRoutesByTo {
   '/admin/profile': typeof AdminProfileRoute
   '/admin/roles': typeof AdminRolesRoute
   '/admin/users': typeof AdminUsersRoute
+  '/analytics/reports': typeof AnalyticsReportsRoute
   '/dashboard/units': typeof DashboardUnitsRoute
   '/dashboard/users': typeof DashboardUsersRoute
   '/finance/cash-flow': typeof FinanceCashFlowRoute
@@ -449,6 +457,7 @@ export interface FileRoutesById {
   '/admin/profile': typeof AdminProfileRoute
   '/admin/roles': typeof AdminRolesRoute
   '/admin/users': typeof AdminUsersRoute
+  '/analytics/reports': typeof AnalyticsReportsRoute
   '/dashboard/units': typeof DashboardUnitsRoute
   '/dashboard/users': typeof DashboardUsersRoute
   '/finance/cash-flow': typeof FinanceCashFlowRoute
@@ -505,6 +514,7 @@ export interface FileRouteTypes {
     | '/admin/profile'
     | '/admin/roles'
     | '/admin/users'
+    | '/analytics/reports'
     | '/dashboard/units'
     | '/dashboard/users'
     | '/finance/cash-flow'
@@ -559,6 +569,7 @@ export interface FileRouteTypes {
     | '/admin/profile'
     | '/admin/roles'
     | '/admin/users'
+    | '/analytics/reports'
     | '/dashboard/units'
     | '/dashboard/users'
     | '/finance/cash-flow'
@@ -613,6 +624,7 @@ export interface FileRouteTypes {
     | '/admin/profile'
     | '/admin/roles'
     | '/admin/users'
+    | '/analytics/reports'
     | '/dashboard/units'
     | '/dashboard/users'
     | '/finance/cash-flow'
@@ -668,6 +680,7 @@ export interface RootRouteChildren {
   AdminProfileRoute: typeof AdminProfileRoute
   AdminRolesRoute: typeof AdminRolesRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  AnalyticsReportsRoute: typeof AnalyticsReportsRoute
   FinanceCashFlowRoute: typeof FinanceCashFlowRoute
   FinanceDashboardRoute: typeof FinanceDashboardRoute
   FinanceDreRoute: typeof FinanceDreRoute
@@ -797,6 +810,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/units'
       preLoaderRoute: typeof DashboardUnitsRouteImport
       parentRoute: typeof DashboardRoute
+    }
+    '/analytics/reports': {
+      id: '/analytics/reports'
+      path: '/analytics/reports'
+      fullPath: '/analytics/reports'
+      preLoaderRoute: typeof AnalyticsReportsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/users': {
       id: '/admin/users'
@@ -1104,6 +1124,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminProfileRoute: AdminProfileRoute,
   AdminRolesRoute: AdminRolesRoute,
   AdminUsersRoute: AdminUsersRoute,
+  AnalyticsReportsRoute: AnalyticsReportsRoute,
   FinanceCashFlowRoute: FinanceCashFlowRoute,
   FinanceDashboardRoute: FinanceDashboardRoute,
   FinanceDreRoute: FinanceDreRoute,
