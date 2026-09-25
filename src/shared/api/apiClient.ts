@@ -1,21 +1,12 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/features/iam/stores/authStore';
 
-export const getApiBaseUrl = (): string => {
-  if (import.meta.env.VITE_API_URL && !import.meta.env.VITE_API_URL.includes('localhost')) {
-    return import.meta.env.VITE_API_URL;
-  }
-  if (typeof window !== 'undefined') {
-    const host = window.location.hostname;
-    if (host !== 'localhost' && host !== '127.0.0.1') {
-      return 'https://gomech-backend-7217905842.us-central1.run.app/api/v1';
-    }
-  }
-  return import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
-};
+// Resolved at build time: `.env.production` / the Docker `VITE_API_URL` build arg in production,
+// falling back to the local backend during development.
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
 export const api = axios.create({
-  baseURL: getApiBaseUrl(),
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -51,7 +42,7 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Response interceptor to handle 401s and Refresh Token Rotation
+// Response interceptor: on 401/403, rotate the refresh token once and replay queued requests
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -74,27 +65,18 @@ api.interceptors.response.use(
       if (isRefreshing) {
         return new Promise<string>((resolve, reject) => {
           failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return api(originalRequest);
-          })
-          .catch((err) => Promise.reject(err));
+        }).then((token) => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
+        });
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const currentRefreshToken = useAuthStore.getState().refreshToken;
-      if (!currentRefreshToken) {
-        useAuthStore.getState().logout();
-        isRefreshing = false;
-        return Promise.reject(error);
-      }
-
       try {
         const { data } = await axios.post(`${api.defaults.baseURL}/auth/refresh`, {
-          refreshToken: currentRefreshToken,
+          refreshToken,
         });
 
         useAuthStore.getState().setAuth(data.accessToken, data.refreshToken, data.user);
@@ -113,6 +95,3 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-export const apiClient = api;
-export default api;
