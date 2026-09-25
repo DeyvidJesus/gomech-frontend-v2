@@ -29,3 +29,7 @@ A CI executa `npm ci`, `npm run lint` e `npm run build` a cada push e pull reque
 
 - [Arquitetura do frontend](https://github.com/DeyvidJesus/gomech/blob/master/docs/FRONTEND_ARCHITECTURE.md)
 - [Design system e protótipos](https://github.com/DeyvidJesus/gomech/blob/master/docs/design/README.md)
+
+## Licença
+
+[MIT](LICENSE)
